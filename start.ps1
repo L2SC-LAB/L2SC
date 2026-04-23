@@ -19,7 +19,7 @@ switch ($Command.ToLower()) {
         Say "Chờ service sẵn sàng..."
         for ($i = 0; $i -lt 30; $i++) {
             try {
-                $r = Invoke-WebRequest -Uri "http://localhost:8100/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+                $r = Invoke-WebRequest -Uri "http://localhost:991/health" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
                 if ($r.StatusCode -eq 200) { Ok "L2SC đã chạy"; break }
             } catch { Start-Sleep -Seconds 2; Write-Host "." -NoNewline }
         }
@@ -29,8 +29,8 @@ switch ($Command.ToLower()) {
         Write-Host "   ✓ L2SC đã khởi động" -ForegroundColor Green
         Write-Host "========================================" -ForegroundColor Green
         Write-Host ""
-        Write-Host "  Frontend:  http://localhost:8101" -ForegroundColor Yellow
-        Write-Host "  API docs:  http://localhost:8100/docs" -ForegroundColor Yellow
+        Write-Host "  Frontend:  http://localhost:990" -ForegroundColor Yellow
+        Write-Host "  API docs:  http://localhost:991/docs" -ForegroundColor Yellow
         Write-Host "  Admin key: docker compose logs l2sc | Select-String 'Admin seeded'" -ForegroundColor Gray
         Write-Host ""
     }

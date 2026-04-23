@@ -57,6 +57,22 @@ Repository:
 - L2S core: https://github.com/ngohongthong1832004/L2S
 - L2SC community: https://github.com/ngohongthong1832004/L2SC
 
+## Truy cập L2SC
+
+L2SC là cổng cộng đồng/marketing của hệ sinh thái L2S. Khi public ra ngoài, frontend và backend của L2SC đang dùng các port sau:
+
+- L2SC Frontend: http://localhost:990
+- L2SC Backend API: http://localhost:991
+- L2SC API Docs: http://localhost:991/docs
+
+Nếu chạy bằng Docker Compose trong repository L2SC:
+
+```bash
+docker compose up -d --build
+```
+
+Sau khi chạy xong, mở `http://localhost:990` để xem landing page, video quảng cáo, workflow community và modal thông báo bản trải nghiệm mở từ ngày **05/05/2026**.
+
 ## Hướng dẫn chạy L2S
 
 Cách nhanh nhất là dùng Docker. Clone repository L2S rồi chạy script khởi động theo hệ điều hành.

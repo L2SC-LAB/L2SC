@@ -25,7 +25,7 @@ case "${1:-up}" in
         docker compose up -d
         say "Chờ service sẵn sàng..."
         for i in $(seq 1 30); do
-            if curl -fsS --max-time 2 http://localhost:8100/health &>/dev/null; then
+            if curl -fsS --max-time 2 http://localhost:991/health &>/dev/null; then
                 ok "L2SC đã chạy"
                 break
             fi
@@ -36,10 +36,10 @@ case "${1:-up}" in
         printf "\n${C_GREEN}========================================${C_OFF}\n"
         printf "${C_GREEN}   ✓ L2SC đã khởi động${C_OFF}\n"
         printf "${C_GREEN}========================================${C_OFF}\n\n"
-        printf "  Frontend:   ${C_YELLOW}http://localhost:8101${C_OFF}\n"
-        printf "  API docs:   ${C_YELLOW}http://localhost:8100/docs${C_OFF}\n"
-        printf "  LAN FE:     ${C_YELLOW}http://%s:8101${C_OFF}\n"
-        printf "  LAN API:    ${C_YELLOW}http://%s:8100${C_OFF}\n\n" "$LAN_IP" "$LAN_IP"
+        printf "  Frontend:   ${C_YELLOW}http://localhost:990${C_OFF}\n"
+        printf "  API docs:   ${C_YELLOW}http://localhost:991/docs${C_OFF}\n"
+        printf "  LAN FE:     ${C_YELLOW}http://%s:990${C_OFF}\n"
+        printf "  LAN API:    ${C_YELLOW}http://%s:991${C_OFF}\n\n" "$LAN_IP" "$LAN_IP"
         printf "  Admin key:  xem log lần đầu — docker compose logs l2sc | grep 'Admin seeded'\n\n"
         ;;
     down)

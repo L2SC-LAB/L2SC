@@ -3,7 +3,7 @@ services:
     build: .
     container_name: l2sc-service
     ports:
-      - "8100:8100"
+      - "991:991"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/l2sc
       - L2SC_ADMIN_API_KEY=${L2SC_ADMIN_API_KEY:-}   # để trống = random mỗi lần start
@@ -19,7 +19,7 @@ services:
     container_name: l2sc-frontend
     working_dir: /app
     ports:
-      - "8101:5174"
+      - "990:990"
     environment:
       - VITE_API_URL=
       - CHOKIDAR_USEPOLLING=true
