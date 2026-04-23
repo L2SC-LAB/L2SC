@@ -126,6 +126,20 @@ class ApproveRequest(BaseModel):
     reason: Optional[str] = None
 
 
+# ---------- Node Auto-Auth (L2S tự đăng ký khi khởi động) ----------
+
+class NodeAuthRequest(BaseModel):
+    node_token: str    # = L2S_CLUSTER_TOKEN — unique per installation
+    base_url: str      # http://192.168.x.x:9995
+    name: str          # "L2S @ hostname"
+
+class NodeAuthResponse(BaseModel):
+    api_key: str
+    contributor_id: str
+    node_id: str
+    message: str
+
+
 # ---------- L2S Bridge (gọi từ L2S sang L2SC) ----------
 
 class PublishRequest(BaseModel):

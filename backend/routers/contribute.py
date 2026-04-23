@@ -7,15 +7,75 @@ from sqlalchemy.orm import Session
 from uuid import uuid4
 from backend.database import get_db
 from backend import db_models
+from datetime import datetime
 from backend.models import (
     ContributorRegister, ContributorOut,
     NodeRegister, NodeOut,
     WorkflowSubmit, WorkflowUpdate, WorkflowOut,
+    NodeAuthRequest, NodeAuthResponse,
 )
 from backend.auth import get_contributor, generate_api_key, generate_public_token
 from backend.routers.public import _to_out
 
 router = APIRouter(prefix="/api/contribute", tags=["contribute"])
+
+
+# ---------- Auto-registration cho L2S node (public, không cần key trước) ----------
+
+@router.post("/node-auth", response_model=NodeAuthResponse)
+def node_auth(body: NodeAuthRequest, db: Session = Depends(get_db)):
+    """
+    L2S gọi endpoint này lúc khởi động để tự đăng ký với L2SC.
+    Dùng L2S_CLUSTER_TOKEN làm identity — không cần tạo tài khoản thủ công.
+    Nếu đã tồn tại → cập nhật base_url + last_seen. Nếu chưa → tạo mới.
+    """
+    if not body.node_token or len(body.node_token) < 32:
+        raise HTTPException(status_code=400, detail="node_token quá ngắn (cần ≥ 32 ký tự)")
+
+    contributor = db.query(db_models.Contributor).filter(
+        db_models.Contributor.api_key == body.node_token
+    ).first()
+
+    if not contributor:
+        short = body.node_token[:8]
+        contributor = db_models.Contributor(
+            id=str(uuid4()),
+            username=f"node-{short}",
+            email=f"node-{short}@auto.l2sc",
+            api_key=body.node_token,
+            bio=f"Auto-registered L2S node: {body.name}",
+        )
+        db.add(contributor)
+        db.flush()
+
+    node = db.query(db_models.L2SNode).filter(
+        db_models.L2SNode.node_api_key == body.node_token,
+        db_models.L2SNode.contributor_id == contributor.id,
+    ).first()
+
+    if not node:
+        node = db_models.L2SNode(
+            id=str(uuid4()),
+            name=body.name,
+            base_url=body.base_url.rstrip("/"),
+            node_api_key=body.node_token,
+            contributor_id=contributor.id,
+            is_active=True,
+        )
+        db.add(node)
+    else:
+        node.base_url = body.base_url.rstrip("/")
+        node.name = body.name
+        node.is_active = True
+        node.last_seen_at = datetime.utcnow()
+
+    db.commit()
+    return NodeAuthResponse(
+        api_key=body.node_token,
+        contributor_id=contributor.id,
+        node_id=node.id,
+        message="Node registered" if node.last_seen_at is None else "Node refreshed",
+    )
 
 
 # ---------- Đăng ký (public, không cần key) ----------
