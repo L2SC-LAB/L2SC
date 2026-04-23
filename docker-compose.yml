@@ -19,7 +19,7 @@ services:
     container_name: l2sc-frontend
     working_dir: /app
     ports:
-      - "990:990"
+      - "9991:9991"
     environment:
       - VITE_API_URL=
       - CHOKIDAR_USEPOLLING=true

@@ -61,7 +61,7 @@ Repository:
 
 L2SC là cổng cộng đồng/marketing của hệ sinh thái L2S. Khi public ra ngoài, frontend và backend của L2SC đang dùng các port sau:
 
-- L2SC Frontend: http://localhost:990
+- L2SC Frontend: http://localhost:9991
 - L2SC Backend API: http://localhost:991
 - L2SC API Docs: http://localhost:991/docs
 
@@ -71,7 +71,7 @@ Nếu chạy bằng Docker Compose trong repository L2SC:
 docker compose up -d --build
 ```
 
-Sau khi chạy xong, mở `http://localhost:990` để xem landing page, video quảng cáo, workflow community và modal thông báo bản trải nghiệm mở từ ngày **05/05/2026**.
+Sau khi chạy xong, mở `http://localhost:9991` để xem landing page, video quảng cáo, workflow community và modal thông báo bản trải nghiệm mở từ ngày **05/05/2026**.
 
 ## Hướng dẫn chạy L2S
 

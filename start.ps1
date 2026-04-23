@@ -29,7 +29,7 @@ switch ($Command.ToLower()) {
         Write-Host "   ✓ L2SC đã khởi động" -ForegroundColor Green
         Write-Host "========================================" -ForegroundColor Green
         Write-Host ""
-        Write-Host "  Frontend:  http://localhost:990" -ForegroundColor Yellow
+        Write-Host "  Frontend:  http://localhost:9991" -ForegroundColor Yellow
         Write-Host "  API docs:  http://localhost:991/docs" -ForegroundColor Yellow
         Write-Host "  Admin key: docker compose logs l2sc | Select-String 'Admin seeded'" -ForegroundColor Gray
         Write-Host ""

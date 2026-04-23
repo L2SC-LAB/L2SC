@@ -36,9 +36,9 @@ case "${1:-up}" in
         printf "\n${C_GREEN}========================================${C_OFF}\n"
         printf "${C_GREEN}   ✓ L2SC đã khởi động${C_OFF}\n"
         printf "${C_GREEN}========================================${C_OFF}\n\n"
-        printf "  Frontend:   ${C_YELLOW}http://localhost:990${C_OFF}\n"
+        printf "  Frontend:   ${C_YELLOW}http://localhost:9991${C_OFF}\n"
         printf "  API docs:   ${C_YELLOW}http://localhost:991/docs${C_OFF}\n"
-        printf "  LAN FE:     ${C_YELLOW}http://%s:990${C_OFF}\n"
+        printf "  LAN FE:     ${C_YELLOW}http://%s:9991${C_OFF}\n"
         printf "  LAN API:    ${C_YELLOW}http://%s:991${C_OFF}\n\n" "$LAN_IP" "$LAN_IP"
         printf "  Admin key:  xem log lần đầu — docker compose logs l2sc | grep 'Admin seeded'\n\n"
         ;;
