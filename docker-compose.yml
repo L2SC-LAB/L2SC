@@ -1,0 +1,53 @@
+services:
+  l2sc:
+    build: .
+    container_name: l2sc-service
+    ports:
+      - "8100:8100"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/l2sc
+      - L2SC_ADMIN_API_KEY=${L2SC_ADMIN_API_KEY:-}   # để trống = random mỗi lần start
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app/backend   # hot reload khi dev
+
+  frontend:
+    image: node:18-alpine
+    container_name: l2sc-frontend
+    working_dir: /app
+    ports:
+      - "8101:5174"
+    environment:
+      - VITE_API_URL=
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install --legacy-peer-deps && npm run dev"
+    depends_on:
+      - l2sc
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: l2sc-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=l2sc
+    ports:
+      - "9992:5432"
+    volumes:
+      - l2sc_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  l2sc_postgres_data:
