@@ -5,10 +5,14 @@ import {
   Download, Upload, CheckCircle2, Zap, Shield, BookOpen,
   ChevronRight, BarChart2, Cpu, Boxes, Star,
   Brain, Database, GitBranch, FlaskConical, Bot, Layers,
-  Network, Code2, Heart, Github, X, Minus,
+  Network, Code2, Heart, Github, X, Minus, ExternalLink, Video,
 } from 'lucide-react'
 import { api, Stats } from '../api/client'
 import { useAuthStore } from '../store/authStore'
+
+const L2S_REPO_URL = 'https://github.com/ngohongthong1832004/L2S'
+const L2SC_REPO_URL = 'https://github.com/ngohongthong1832004/L2SC'
+const PROMO_VIDEO_URL = ''
 
 export default function Landing() {
   const { apiKey } = useAuthStore()
@@ -39,6 +43,7 @@ export default function Landing() {
             <a href="#power"    className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Sức mạnh</a>
             <a href="#compare"  className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">So sánh</a>
             <a href="#how"      className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Cách dùng</a>
+            <a href="#promo"    className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Video</a>
             <Link to="/browse"  className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Browse</Link>
           </nav>
 
@@ -358,16 +363,17 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ─── COMPARE WITH N8N ─── */}
+      {/* ─── COMPARE WITH AUTOMATION SYSTEMS ─── */}
       <section id="compare" className="py-24 border-t border-slate-800/50 bg-gradient-to-b from-slate-900/40 to-transparent">
         <div className="container mx-auto px-6 max-w-5xl">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-500/10 border border-orange-500/30 rounded-full text-orange-300 text-xs font-medium mb-4">
               <BarChart2 size={12} /> So sánh
             </div>
-            <h2 className="text-4xl font-bold text-white mb-3">L2S vs n8n</h2>
+            <h2 className="text-4xl font-bold text-white mb-3">L2S vs Hệ thống automation</h2>
             <p className="text-slate-400 max-w-xl mx-auto">
-              n8n là công cụ automation tuyệt vời — nhưng L2S được xây dựng cho bài toán <strong className="text-slate-200">data engineering &amp; AI</strong> ở quy mô lớn hơn.
+              Nhiều hệ thống automation mạnh ở tác vụ tích hợp nhanh, còn L2S tập trung sâu vào
+              <strong className="text-slate-200"> data engineering &amp; AI</strong> với khả năng mở rộng cao hơn.
             </p>
           </div>
 
@@ -384,27 +390,27 @@ export default function Landing() {
                   </th>
                   <th className="p-4 text-center w-[30%]">
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg">
-                      <span className="text-slate-300 font-semibold">n8n</span>
+                      <span className="text-slate-300 font-semibold">Hệ thống automation</span>
                     </div>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { feature: 'Visual drag-and-drop editor',          l2s: true,    n8n: true,   note: '' },
-                  { feature: 'On-premise self-hosted',               l2s: true,    n8n: 'paid', note: 'n8n cloud free, self-host cần license' },
-                  { feature: 'BigData processing (Spark / Dask)',     l2s: true,    n8n: false,  note: 'n8n không có native BigData node' },
-                  { feature: 'Multi-node distributed cluster',        l2s: true,    n8n: false,  note: 'n8n không có cluster LAN' },
-                  { feature: 'Train AI / ML model',                   l2s: true,    n8n: false,  note: 'n8n chỉ gọi API AI, không train' },
-                  { feature: 'ETL pipeline quy mô lớn',               l2s: true,    n8n: 'half', note: 'n8n ổn với ETL nhỏ, không tối ưu GB+' },
-                  { feature: 'Test environment sandbox',              l2s: true,    n8n: false,  note: '' },
-                  { feature: 'Automation & webhook',                  l2s: true,    n8n: true,   note: '' },
-                  { feature: 'AI assistant tích hợp',                 l2s: true,    n8n: 'half', note: 'n8n có AI node nhưng không có assistant' },
-                  { feature: 'Plugin / custom node từ PyPI',          l2s: true,    n8n: 'half', note: 'n8n dùng JavaScript custom node' },
-                  { feature: 'Community workflow marketplace',        l2s: true,    n8n: true,   note: '' },
-                  { feature: 'Hoàn toàn miễn phí (self-host)',        l2s: true,    n8n: 'paid', note: 'n8n self-host yêu cầu Fair Code license' },
-                  { feature: 'Tài liệu tiếng Việt',                   l2s: true,    n8n: false,  note: '' },
-                  { feature: 'Made in Vietnam 🇻🇳',                   l2s: true,    n8n: false,  note: 'n8n — German startup' },
+                  { feature: 'Visual drag-and-drop editor',          l2s: true,    automation: true,   note: '' },
+                  { feature: 'On-premise self-hosted',               l2s: true,    automation: 'half', note: 'Nhiều nền tảng cloud-first, self-host cần cấu hình nâng cao' },
+                  { feature: 'BigData processing (Spark / Dask)',     l2s: true,    automation: false,  note: 'Thường tối ưu automation tác vụ, chưa tập trung BigData native' },
+                  { feature: 'Multi-node distributed cluster',        l2s: true,    automation: false,  note: 'Ít hệ thống hỗ trợ phân tán tài nguyên LAN-native' },
+                  { feature: 'Train AI / ML model',                   l2s: true,    automation: 'half', note: 'Phổ biến ở tích hợp AI API, ít tập trung training pipeline' },
+                  { feature: 'ETL pipeline quy mô lớn',               l2s: true,    automation: 'half', note: 'Phù hợp ETL nhỏ-vừa, chưa tối ưu mạnh cho dữ liệu lớn' },
+                  { feature: 'Test environment sandbox',              l2s: true,    automation: false,  note: '' },
+                  { feature: 'Automation & webhook',                  l2s: true,    automation: true,   note: '' },
+                  { feature: 'AI assistant tích hợp',                 l2s: true,    automation: 'half', note: 'Nhiều nền tảng có AI node, nhưng chưa có trợ lý sâu theo ngữ cảnh pipeline' },
+                  { feature: 'Plugin / custom node từ PyPI',          l2s: true,    automation: 'half', note: 'Hỗ trợ mở rộng khác nhau tùy hệ sinh thái công nghệ' },
+                  { feature: 'Community workflow marketplace',        l2s: true,    automation: true,   note: '' },
+                  { feature: 'Chi phí self-host dài hạn',             l2s: true,    automation: 'paid', note: 'Một số nền tảng cần gói trả phí cho tính năng nâng cao' },
+                  { feature: 'Tài liệu tiếng Việt',                   l2s: true,    automation: false,  note: '' },
+                  { feature: 'Made in Vietnam',                       l2s: true,    automation: false,  note: 'Định hướng cộng đồng IT Việt và nhu cầu doanh nghiệp nội địa' },
                 ].map((row, i) => (
                   <tr key={row.feature} className={`border-b border-slate-800/60 ${i % 2 === 0 ? 'bg-slate-900/20' : ''} hover:bg-slate-800/20 transition`}>
                     <td className="p-4 text-slate-300">
@@ -412,21 +418,15 @@ export default function Landing() {
                       {row.note && <span className="block text-xs text-slate-600 mt-0.5">{row.note}</span>}
                     </td>
                     <td className="p-4 text-center">
-                      {row.l2s === true ? (
-                        <CheckCircle2 size={18} className="text-teal-400 mx-auto" />
-                      ) : row.l2s === 'half' ? (
-                        <Minus size={18} className="text-amber-400 mx-auto" />
-                      ) : (
-                        <X size={18} className="text-red-400 mx-auto" />
-                      )}
+                      <CheckCircle2 size={18} className="text-teal-400 mx-auto" />
                     </td>
                     <td className="p-4 text-center">
-                      {row.n8n === true ? (
+                      {row.automation === true ? (
                         <CheckCircle2 size={18} className="text-emerald-400 mx-auto" />
-                      ) : row.n8n === 'half' ? (
+                      ) : row.automation === 'half' ? (
                         <Minus size={18} className="text-amber-400 mx-auto" />
-                      ) : row.n8n === 'paid' ? (
-                        <span className="text-xs text-amber-400 font-medium">Paid</span>
+                      ) : row.automation === 'paid' ? (
+                        <span className="text-xs text-amber-400 font-medium">Paid+</span>
                       ) : (
                         <X size={18} className="text-red-400 mx-auto" />
                       )}
@@ -438,7 +438,7 @@ export default function Landing() {
           </div>
 
           <p className="text-center text-xs text-slate-600 mt-4">
-            So sánh dựa trên tính năng hiện có. n8n là sản phẩm xuất sắc cho automation — L2S tập trung vào data engineering &amp; AI ở quy mô lớn hơn.
+            So sánh dựa trên nhóm tính năng phổ biến của các hệ thống automation hiện nay.
           </p>
         </div>
       </section>
@@ -457,15 +457,25 @@ export default function Landing() {
           </div>
 
           <div className="relative">
-            <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-teal-500/30 via-cyan-500/30 to-sky-500/30" />
             <div className="grid md:grid-cols-4 gap-6">
               {[
                 { step: '01', icon: <Cpu size={22} className="text-blue-400" />,      color: 'from-blue-500/20   to-blue-600/10',   border: 'border-blue-500/30',   title: 'Deploy L2S',      desc: 'Cài đặt L2S on-premise trên máy chủ của bạn.' },
                 { step: '02', icon: <Workflow size={22} className="text-violet-400" />,color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/30', title: 'Tạo Workflow',    desc: 'Kéo-thả các node để xây dựng pipeline xử lý dữ liệu.' },
                 { step: '03', icon: <Upload size={22} className="text-teal-400" />,    color: 'from-teal-500/20   to-teal-600/10',   border: 'border-teal-500/30',   title: 'Submit lên L2SC', desc: 'Đăng ký node và submit workflow. Admin L2SC sẽ review.' },
                 { step: '04', icon: <Globe size={22} className="text-cyan-400" />,     color: 'from-cyan-500/20   to-cyan-600/10',   border: 'border-cyan-500/30',   title: 'Cộng đồng dùng',  desc: 'Ai cũng có thể browse, import hoặc execute trực tiếp.' },
-              ].map((step) => (
+              ].map((step, index, steps) => (
                 <div key={step.step} className="relative text-center">
+                  {index < steps.length - 1 && (
+                    <div
+                      aria-hidden="true"
+                      className="hidden md:block absolute top-10 left-[calc(50%+2.5rem)] w-[calc(100%-3.5rem)] pointer-events-none"
+                    >
+                      <div className="h-[2px] rounded-full bg-gradient-to-r from-blue-400/25 via-cyan-400/55 to-teal-400/25 shadow-[0_0_14px_rgba(34,211,238,0.25)]" />
+                      <div className="absolute -top-[3px] left-0 w-2 h-2 rounded-full bg-cyan-400/45" />
+                      <div className="absolute -top-[3px] right-0 w-2 h-2 rounded-full bg-cyan-300/70 animate-pulse" />
+                    </div>
+                  )}
+
                   <div className={`w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br ${step.color} border ${step.border} flex items-center justify-center mb-4 relative z-10`}>
                     {step.icon}
                     <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-slate-900 border border-slate-700 text-[10px] font-bold text-slate-400 flex items-center justify-center">
@@ -517,7 +527,7 @@ export default function Landing() {
                   <div>
                     <p className="text-amber-200 font-semibold text-sm mb-1">Cam kết Open Source</p>
                     <p className="text-slate-400 text-sm">
-                      Khi repository đạt <strong className="text-amber-300">1.000 ⭐ GitHub</strong>,
+                      Khi repository đạt <strong className="text-amber-300">1.000 sao GitHub</strong>,
                       chúng tôi sẽ <strong className="text-white">public toàn bộ source code core</strong> của L2S
                       dưới giấy phép mã nguồn mở. Cộng đồng sẽ có thể fork, contribute và
                       cùng phát triển nền tảng này.
@@ -528,15 +538,28 @@ export default function Landing() {
 
               <div className="flex flex-wrap gap-3">
                 <a
-                  href="https://github.com"
+                  href={L2S_REPO_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl transition text-sm font-medium"
                 >
                   <Github size={16} />
-                  Star trên GitHub
-                  <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded border border-amber-500/30">⭐ → 1k = OSS</span>
+                  L2S Source
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded border border-amber-500/30">
+                    <Star size={11} /> 1k sao = OSS
+                  </span>
                 </a>
+
+                <a
+                  href={L2SC_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl transition text-sm font-medium"
+                >
+                  <Github size={16} />
+                  L2SC Source
+                </a>
+
                 <Link
                   to="/register"
                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-xl transition text-sm font-medium"
@@ -551,28 +574,30 @@ export default function Landing() {
             <div className="space-y-4">
               {[
                 {
-                  flag: '🇻🇳',
+                  icon: <Heart size={18} className="text-red-400" />,
                   title: 'Sản phẩm Việt cho người Việt',
                   desc: 'Giao diện, tài liệu, support — tất cả bằng tiếng Việt. Không barrier ngôn ngữ, không barrier chi phí.',
                 },
                 {
-                  flag: '🤝',
+                  icon: <Users size={18} className="text-teal-400" />,
                   title: 'Cộng đồng là sức mạnh',
                   desc: 'Mỗi workflow bạn share lên L2SC là một đóng góp cho hàng ngàn kỹ sư khác. Cộng đồng mạnh — sản phẩm mạnh.',
                 },
                 {
-                  flag: '🔓',
+                  icon: <Shield size={18} className="text-amber-400" />,
                   title: 'Cam kết minh bạch',
                   desc: '1.000 sao GitHub = public source code core. Không lock-in, không surprise pricing. Lời hứa trước cộng đồng.',
                 },
                 {
-                  flag: '📚',
+                  icon: <BookOpen size={18} className="text-sky-400" />,
                   title: 'Tri thức không biên giới',
                   desc: 'Doanh nghiệp nhỏ, startup, sinh viên hay freelancer — ai cũng có quyền dùng công nghệ data tốt như các tập đoàn lớn.',
                 },
               ].map((v) => (
                 <div key={v.title} className="flex gap-4 p-4 bg-slate-800/40 border border-slate-700/50 rounded-xl hover:border-slate-600/60 transition">
-                  <span className="text-2xl flex-shrink-0">{v.flag}</span>
+                  <div className="w-10 h-10 rounded-lg border border-slate-700 bg-slate-900/60 flex items-center justify-center flex-shrink-0">
+                    {v.icon}
+                  </div>
                   <div>
                     <h3 className="text-white font-semibold text-sm mb-1">{v.title}</h3>
                     <p className="text-slate-400 text-sm leading-relaxed">{v.desc}</p>
@@ -590,15 +615,15 @@ export default function Landing() {
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-teal-500/10 via-cyan-500/10 to-sky-500/10 rounded-3xl blur-3xl" />
             <div className="relative p-12 rounded-3xl border border-slate-700/60 bg-slate-900/40 backdrop-blur">
-              <div className="text-4xl mb-4">🇻🇳</div>
+              <div className="w-14 h-14 rounded-2xl border border-red-500/30 bg-red-500/10 flex items-center justify-center mx-auto mb-5">
+                <Heart size={26} className="text-red-400" />
+              </div>
               <h2 className="text-4xl font-bold text-white mb-4">Cùng nhau xây dựng</h2>
               <p className="text-slate-400 text-lg mb-3 max-w-lg mx-auto">
                 Hàng ngàn kỹ sư dữ liệu Việt đang dùng L2S mỗi ngày.
                 Workflow của bạn sẽ giúp ích cho tất cả.
               </p>
-              <p className="text-slate-500 text-sm mb-8">
-                Star GitHub để chúng tôi sớm open-source core 🙏
-              </p>
+              <p className="text-slate-500 text-sm mb-8">Star GitHub để chúng tôi sớm open-source core.</p>
               <div className="flex flex-wrap justify-center gap-4">
                 <Link
                   to="/register"
@@ -628,13 +653,29 @@ export default function Landing() {
               </div>
               <div>
                 <span className="text-white font-bold text-sm">L2SC</span>
-                <span className="block text-[11px] text-slate-500">L2S Communicate — Made in Vietnam 🇻🇳</span>
+                <span className="block text-[11px] text-slate-500">L2S Communicate — Made in Vietnam</span>
               </div>
             </div>
             <nav className="flex items-center gap-6 text-sm text-slate-500">
               <Link to="/browse"   className="hover:text-white transition">Browse</Link>
               <Link to="/register" className="hover:text-white transition">Register</Link>
               <Link to="/login"    className="hover:text-white transition">Login</Link>
+              <a
+                href={L2S_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition flex items-center gap-1"
+              >
+                <Github size={13} /> L2S GitHub
+              </a>
+              <a
+                href={L2SC_REPO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition flex items-center gap-1"
+              >
+                <Github size={13} /> L2SC GitHub
+              </a>
               <a href="/docs"      className="hover:text-white transition flex items-center gap-1"><BookOpen size={13} /> API Docs</a>
             </nav>
             <p className="text-xs text-slate-600">
