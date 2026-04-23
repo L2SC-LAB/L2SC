@@ -67,9 +67,11 @@ class PublicWorkflow(Base):
     l2s_workflow_id = Column(String, nullable=True)         # ID workflow trên L2S node
 
     is_approved = Column(Boolean, default=False, nullable=False, index=True)
+    is_rejected = Column(Boolean, default=False, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     version = Column(String, default="1.0.0", nullable=False)
     call_count = Column(Integer, default=0, nullable=False)
+    star_count = Column(Integer, default=0, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

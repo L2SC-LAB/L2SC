@@ -23,4 +23,23 @@ def get_db():
 
 def init_db():
     from backend import db_models  # noqa: F401
+    from sqlalchemy import inspect, text
     Base.metadata.create_all(bind=engine)
+
+    # Light migration: thêm cột mới vào public_workflows nếu chưa có
+    try:
+        insp = inspect(engine)
+        if "public_workflows" in insp.get_table_names():
+            cols = {c["name"] for c in insp.get_columns("public_workflows")}
+            migrations = [
+                ("is_rejected", "ALTER TABLE public_workflows ADD COLUMN is_rejected BOOLEAN NOT NULL DEFAULT FALSE"),
+                ("star_count",  "ALTER TABLE public_workflows ADD COLUMN star_count INTEGER NOT NULL DEFAULT 0"),
+            ]
+            for col_name, ddl in migrations:
+                if col_name not in cols:
+                    with engine.connect() as conn:
+                        conn.execute(text(ddl))
+                        conn.commit()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"[init_db] migration skip: {e}")

@@ -141,6 +141,20 @@ def _get_approved(workflow_id: str, db: Session) -> db_models.PublicWorkflow:
     return w
 
 
+@router.post("/{workflow_id}/star")
+def star_workflow(workflow_id: str, db: Session = Depends(get_db)):
+    """Tăng star_count cho workflow (public, không cần auth). Simple counter."""
+    w = db.query(db_models.PublicWorkflow).filter(
+        db_models.PublicWorkflow.id == workflow_id,
+        db_models.PublicWorkflow.is_approved == True,
+    ).first()
+    if not w:
+        raise HTTPException(status_code=404, detail="Workflow không tìm thấy")
+    w.star_count = (w.star_count or 0) + 1
+    db.commit()
+    return {"star_count": w.star_count}
+
+
 def _to_out(w: db_models.PublicWorkflow) -> WorkflowOut:
     return WorkflowOut(
         id=w.id,
@@ -151,8 +165,10 @@ def _to_out(w: db_models.PublicWorkflow) -> WorkflowOut:
         tags=w.tags or [],
         version=w.version,
         is_approved=w.is_approved,
+        is_rejected=getattr(w, "is_rejected", False),
         is_active=w.is_active,
         call_count=w.call_count,
+        star_count=getattr(w, "star_count", 0),
         has_live_node=bool(w.node_id and w.l2s_workflow_id),
         contributor_username=w.contributor.username if w.contributor else "unknown",
         created_at=w.created_at,

@@ -75,9 +75,11 @@ class WorkflowOut(BaseModel):
     tags: list
     version: str
     is_approved: bool
+    is_rejected: bool = False
     is_active: bool
     call_count: int
-    has_live_node: bool         # True nếu có L2S node registered
+    star_count: int = 0
+    has_live_node: bool
     contributor_username: str
     created_at: datetime
     updated_at: datetime
@@ -122,8 +124,17 @@ class RunOut(BaseModel):
 # ---------- Admin ----------
 
 class ApproveRequest(BaseModel):
-    approved: bool
+    # action: "approve" | "reject" | "revoke"
+    action: str = "approve"
     reason: Optional[str] = None
+
+    # backward-compat: approved=True → action="approve", approved=False → action="reject"
+    approved: Optional[bool] = None
+
+    def resolved_action(self) -> str:
+        if self.approved is not None:
+            return "approve" if self.approved else "reject"
+        return self.action
 
 
 # ---------- Node Auto-Auth (L2S tự đăng ký khi khởi động) ----------

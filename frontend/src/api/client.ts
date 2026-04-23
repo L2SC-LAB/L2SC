@@ -17,8 +17,10 @@ export interface WorkflowOut {
   tags: string[]
   version: string
   is_approved: boolean
+  is_rejected: boolean
   is_active: boolean
   call_count: number
+  star_count: number
   has_live_node: boolean
   contributor_username: string
   created_at: string
@@ -71,6 +73,7 @@ export interface Stats {
 export interface AdminStats extends Stats {
   total_workflows: number
   pending_workflows: number
+  rejected_workflows: number
 }
 
 export const api = {
@@ -144,6 +147,31 @@ export const api = {
     http.delete(`/api/contribute/workflows/${id}`).then((r) => r.data),
 
   // ---------- Admin ----------
+  getAdminWorkflows: (params: {
+    status?: string
+    q?: string
+    category?: string
+    skip?: number
+    limit?: number
+  }) => http.get<WorkflowOut[]>('/api/admin/workflows', { params }).then((r) => r.data),
+
+  getAdminWorkflowCount: (params: { status?: string; q?: string; category?: string }) =>
+    http.get<{ total: number }>('/api/admin/workflows/count', { params }).then((r) => r.data),
+
+  actionWorkflow: (id: string, action: 'approve' | 'reject' | 'revoke') =>
+    http.post(`/api/admin/workflows/${id}/approve`, { action }).then((r) => r.data),
+
+  deleteWorkflowAdmin: (id: string) =>
+    http.delete(`/api/admin/workflows/${id}`).then((r) => r.data),
+
+  starWorkflow: (id: string) =>
+    http.post<{ star_count: number }>(`/api/workflows/${id}/star`).then((r) => r.data),
+
+  getStats: () => http.get<Stats>('/api/stats').then((r) => r.data),
+
+  getAdminStats: () => http.get<AdminStats>('/api/admin/stats').then((r) => r.data),
+
+  // backward-compat kept for other callers
   getPendingWorkflows: () =>
     http.get<WorkflowOut[]>('/api/admin/workflows/pending').then((r) => r.data),
 
@@ -151,12 +179,5 @@ export const api = {
     http.get<WorkflowOut[]>('/api/admin/workflows').then((r) => r.data),
 
   approveWorkflow: (id: string, approved: boolean) =>
-    http.post(`/api/admin/workflows/${id}/approve`, { approved }).then((r) => r.data),
-
-  deleteWorkflowAdmin: (id: string) =>
-    http.delete(`/api/admin/workflows/${id}`).then((r) => r.data),
-
-  getStats: () => http.get<Stats>('/api/stats').then((r) => r.data),
-
-  getAdminStats: () => http.get<AdminStats>('/api/admin/stats').then((r) => r.data),
+    http.post(`/api/admin/workflows/${id}/approve`, { action: approved ? 'approve' : 'reject' }).then((r) => r.data),
 }

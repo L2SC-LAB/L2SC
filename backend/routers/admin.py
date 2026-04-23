@@ -1,8 +1,9 @@
 """
 Admin endpoints — yêu cầu X-API-Key của admin.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 from backend.database import get_db
 from backend import db_models
 from backend.models import WorkflowOut, ApproveRequest
@@ -12,22 +13,67 @@ from backend.routers.public import _to_out
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
+def _filter_workflows(db: Session, status: str, q: Optional[str], category: Optional[str]):
+    query = db.query(db_models.PublicWorkflow)
+    if status == "pending":
+        query = query.filter(
+            db_models.PublicWorkflow.is_approved == False,
+            db_models.PublicWorkflow.is_rejected == False,
+        )
+    elif status == "approved":
+        query = query.filter(db_models.PublicWorkflow.is_approved == True)
+    elif status == "rejected":
+        query = query.filter(db_models.PublicWorkflow.is_rejected == True)
+    # else "all": no filter
+
+    if q:
+        like = f"%{q}%"
+        query = query.filter(
+            db_models.PublicWorkflow.title.ilike(like) |
+            db_models.PublicWorkflow.description.ilike(like)
+        )
+    if category:
+        query = query.filter(db_models.PublicWorkflow.category == category)
+    return query
+
+
 @router.get("/workflows/pending", response_model=list[WorkflowOut])
 def pending_workflows(admin=Depends(get_admin), db: Session = Depends(get_db)):
-    """Danh sách workflow chờ duyệt."""
+    """Danh sách workflow chờ duyệt (backward-compat)."""
     ws = db.query(db_models.PublicWorkflow).filter(
-        db_models.PublicWorkflow.is_approved == False
+        db_models.PublicWorkflow.is_approved == False,
+        db_models.PublicWorkflow.is_rejected == False,
     ).order_by(db_models.PublicWorkflow.created_at.asc()).all()
     return [_to_out(w) for w in ws]
 
 
 @router.get("/workflows", response_model=list[WorkflowOut])
-def all_workflows(admin=Depends(get_admin), db: Session = Depends(get_db)):
-    """Tất cả workflow (kể cả chưa duyệt, chưa active)."""
-    ws = db.query(db_models.PublicWorkflow).order_by(
-        db_models.PublicWorkflow.created_at.desc()
-    ).all()
+def all_workflows(
+    status: str = Query("all", description="all | pending | approved | rejected"),
+    q: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=200),
+    admin=Depends(get_admin),
+    db: Session = Depends(get_db),
+):
+    """Workflows với filter, search, pagination."""
+    query = _filter_workflows(db, status, q, category)
+    total = query.count()
+    ws = query.order_by(db_models.PublicWorkflow.created_at.desc()).offset(skip).limit(limit).all()
     return [_to_out(w) for w in ws]
+
+
+@router.get("/workflows/count")
+def count_workflows(
+    status: str = Query("all"),
+    q: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    admin=Depends(get_admin),
+    db: Session = Depends(get_db),
+):
+    """Đếm tổng workflows theo filter — dùng cho pagination."""
+    return {"total": _filter_workflows(db, status, q, category).count()}
 
 
 @router.post("/workflows/{workflow_id}/approve")
@@ -37,16 +83,31 @@ def approve_workflow(
     admin=Depends(get_admin),
     db: Session = Depends(get_db),
 ):
-    """Duyệt hoặc từ chối workflow."""
+    """Duyệt / từ chối / thu hồi workflow."""
     w = db.query(db_models.PublicWorkflow).filter(
         db_models.PublicWorkflow.id == workflow_id
     ).first()
     if not w:
         raise HTTPException(status_code=404, detail="Workflow không tồn tại")
-    w.is_approved = body.approved
+
+    action = body.resolved_action()
+    if action == "approve":
+        w.is_approved = True
+        w.is_rejected = False
+        msg = "Đã duyệt workflow"
+    elif action == "reject":
+        w.is_approved = False
+        w.is_rejected = True
+        msg = "Đã từ chối workflow"
+    elif action == "revoke":
+        w.is_approved = False
+        w.is_rejected = False
+        msg = "Đã thu hồi duyệt"
+    else:
+        raise HTTPException(status_code=400, detail="action phải là approve/reject/revoke")
+
     db.commit()
-    action = "đã duyệt" if body.approved else "đã từ chối"
-    return {"message": f"Workflow {action}", "workflow_id": workflow_id}
+    return {"message": msg, "workflow_id": workflow_id}
 
 
 @router.delete("/workflows/{workflow_id}")
@@ -63,10 +124,12 @@ def delete_workflow(workflow_id: str, admin=Depends(get_admin), db: Session = De
 
 @router.get("/stats")
 def stats(admin=Depends(get_admin), db: Session = Depends(get_db)):
+    WF = db_models.PublicWorkflow
     return {
-        "total_workflows": db.query(db_models.PublicWorkflow).count(),
-        "approved_workflows": db.query(db_models.PublicWorkflow).filter(db_models.PublicWorkflow.is_approved == True).count(),
-        "pending_workflows": db.query(db_models.PublicWorkflow).filter(db_models.PublicWorkflow.is_approved == False).count(),
+        "total_workflows": db.query(WF).count(),
+        "approved_workflows": db.query(WF).filter(WF.is_approved == True).count(),
+        "pending_workflows": db.query(WF).filter(WF.is_approved == False, WF.is_rejected == False).count(),
+        "rejected_workflows": db.query(WF).filter(WF.is_rejected == True).count(),
         "total_contributors": db.query(db_models.Contributor).count(),
         "total_nodes": db.query(db_models.L2SNode).count(),
         "total_runs": db.query(db_models.WorkflowRun).count(),

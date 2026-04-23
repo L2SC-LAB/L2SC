@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { CalendarDays, Sparkles, X } from 'lucide-react'
 import { useAuthStore } from './store/authStore'
 import Landing from './pages/Landing'
@@ -23,8 +23,9 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
 function TrialAnnouncementModal() {
   const [open, setOpen] = useState(true)
+  const { pathname } = useLocation()
 
-  if (!open) return null
+  if (!open || pathname !== '/') return null
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6 bg-slate-950/75 backdrop-blur-sm">

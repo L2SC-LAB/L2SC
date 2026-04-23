@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Search, X, Globe, Download, Play, Loader2, Tag, User,
   BarChart2, Zap, CheckCircle2, AlertCircle, Eye, FileText,
-  Copy, Check,
+  Copy, Check, Star, Hash,
 } from 'lucide-react'
 import { api, WorkflowOut, WorkflowDetail, RunOut } from '../api/client'
 import { useAuthStore } from '../store/authStore'
@@ -19,7 +19,16 @@ function formatRelative(iso?: string | null) {
   return new Date(iso).toLocaleDateString('vi-VN')
 }
 
-const CATEGORIES = ['', 'data', 'ml', 'etl', 'nlp', 'vision', 'automation', 'other']
+const CATEGORIES = [
+  { value: '', label: 'Tất cả' },
+  { value: 'data', label: 'DATA' },
+  { value: 'ml', label: 'ML' },
+  { value: 'etl', label: 'ETL' },
+  { value: 'nlp', label: 'NLP' },
+  { value: 'vision', label: 'VISION' },
+  { value: 'automation', label: 'AUTOMATION' },
+  { value: 'other', label: 'OTHER' },
+]
 
 export default function Browse() {
   const navigate = useNavigate()
@@ -91,32 +100,40 @@ export default function Browse() {
           </p>
         </div>
 
-        {/* Search + filter */}
-        <div className="mb-8 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Tìm workflow..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full pl-10 pr-8 py-2.5 bg-slate-800/60 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-            />
-            {query && (
-              <button onClick={() => setQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
-                <X size={14} />
+        {/* Search */}
+        <div className="mb-3 relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Tìm workflow..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full pl-10 pr-8 py-2.5 bg-slate-800/60 border border-slate-700 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+          />
+          {query && (
+            <button onClick={() => setQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Category filter chips */}
+        <div className="scrollbar-thin -mx-1 px-1 overflow-x-auto pb-1 mb-6">
+          <div className="flex items-center gap-1 bg-slate-800 border border-slate-700 rounded-lg p-0.5 w-max">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setCategory(cat.value)}
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors whitespace-nowrap ${
+                  category === cat.value
+                    ? 'bg-teal-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                }`}
+              >
+                {cat.label}
               </button>
-            )}
-          </div>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="px-3 py-2.5 bg-slate-800/60 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c ? c.toUpperCase() : 'Tất cả danh mục'}</option>
             ))}
-          </select>
+          </div>
         </div>
 
         {/* Stats bar */}
@@ -125,6 +142,14 @@ export default function Browse() {
             <Globe size={12} className="text-teal-400" />
             {items.length} workflow{query || category ? ' khớp' : ' công khai'}
           </span>
+          {(query || category) && (
+            <button
+              onClick={() => { setQuery(''); setCategory('') }}
+              className="text-xs text-teal-400 hover:text-teal-300 underline"
+            >
+              Xóa filter
+            </button>
+          )}
         </div>
 
         {/* Grid */}
@@ -177,23 +202,36 @@ function WorkflowCard({ wf, onDetail, onExecute }: { wf: WorkflowOut; onDetail: 
       <div className="h-1 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500" />
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-3 gap-2">
-          <div className="flex items-center gap-2 flex-wrap min-w-0">
-            {wf.category && (
-              <span className="px-2 py-0.5 bg-teal-500/10 text-teal-300 text-xs rounded border border-teal-500/30 flex-shrink-0">
-                {wf.category}
-              </span>
-            )}
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
             {wf.has_live_node && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/10 text-emerald-300 text-xs rounded border border-emerald-500/30 flex-shrink-0">
-                <Zap size={10} />
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+                </span>
                 Live
               </span>
             )}
+            {wf.category && (
+              <span className="px-2 py-0.5 bg-sky-500/10 text-sky-300 text-xs rounded border border-sky-500/30 flex-shrink-0">
+                {wf.category.toUpperCase()}
+              </span>
+            )}
           </div>
-          <span className="inline-flex items-center gap-1 text-xs text-slate-500 flex-shrink-0">
-            <BarChart2 size={11} />
-            {wf.call_count}
-          </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {(wf.star_count ?? 0) > 0 && (
+              <span className={`inline-flex items-center gap-1 text-xs ${
+                (wf.star_count ?? 0) >= 10 ? 'text-amber-400' : 'text-amber-400/70'
+              }`}>
+                <Star size={11} className={(wf.star_count ?? 0) >= 10 ? 'fill-amber-400' : ''} />
+                {wf.star_count}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+              <Zap size={11} />
+              {wf.call_count}
+            </span>
+          </div>
         </div>
 
         <h3 className="text-base font-semibold text-white mb-1.5 line-clamp-1" title={wf.title}>
@@ -206,8 +244,8 @@ function WorkflowCard({ wf, onDetail, onExecute }: { wf: WorkflowOut; onDetail: 
         {wf.tags.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
             {wf.tags.slice(0, 3).map((t) => (
-              <span key={t} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-700/50 text-slate-400 text-xs rounded">
-                <Tag size={9} />
+              <span key={t} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-slate-700/50 text-slate-400 text-xs rounded">
+                <Hash size={9} />
                 {t}
               </span>
             ))}
