@@ -609,6 +609,105 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ─── GITHUB + PROMO VIDEO ─── */}
+      <section id="promo" className="py-24 border-t border-slate-800/50 bg-gradient-to-b from-slate-900/30 to-transparent">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-cyan-300 text-xs font-medium mb-5">
+                <Video size={12} /> Video quảng cáo
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-5 leading-tight">
+                Xem L2SC hoạt động<br />
+                qua demo ngắn
+              </h2>
+              <p className="text-slate-400 leading-relaxed mb-6">
+                Section này dùng để gắn video giới thiệu sản phẩm và dẫn người xem về GitHub.
+                Khi có link video chính thức, chỉ cần cập nhật <span className="text-slate-200">PROMO_VIDEO_URL</span>
+                trong landing page là khung phát sẽ tự hiển thị.
+              </p>
+
+              <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                {[
+                  'Xem nhanh flow browse, import và execute workflow',
+                  'Dẫn thẳng về repository để star, fork hoặc contribute',
+                  'Phù hợp để demo trong báo cáo, thuyết trình và README',
+                  'Không phụ thuộc nền tảng video cụ thể',
+                ].map((item) => (
+                  <div key={item} className="flex items-start gap-2.5 text-sm text-slate-300">
+                    <CheckCircle2 size={16} className="text-teal-400 flex-shrink-0 mt-0.5" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={L2SC_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-xl transition text-sm font-semibold shadow-lg shadow-teal-500/25"
+                >
+                  <Github size={16} />
+                  Mở GitHub L2SC
+                  <ExternalLink size={14} />
+                </a>
+                <a
+                  href={L2S_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-xl transition text-sm font-medium"
+                >
+                  <Github size={16} />
+                  Xem L2S Core
+                </a>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/10 via-cyan-500/10 to-sky-500/10 rounded-3xl blur-2xl" />
+              <div className="relative overflow-hidden rounded-2xl border border-slate-700/60 bg-slate-900/70 shadow-2xl">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+                  </div>
+                  <span className="text-xs text-slate-500">L2SC promo preview</span>
+                </div>
+
+                <div className="aspect-video bg-slate-950">
+                  {PROMO_VIDEO_URL ? (
+                    <iframe
+                      className="w-full h-full"
+                      src={PROMO_VIDEO_URL}
+                      title="Video quảng cáo L2SC"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <a
+                      href={L2SC_REPO_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group w-full h-full flex flex-col items-center justify-center text-center px-6 bg-[radial-gradient(circle_at_center,rgba(20,184,166,0.18),transparent_55%)]"
+                    >
+                      <span className="w-20 h-20 rounded-full border border-teal-400/40 bg-teal-500/15 flex items-center justify-center mb-5 group-hover:scale-105 transition">
+                        <Play size={34} className="text-teal-300 ml-1" />
+                      </span>
+                      <span className="text-white font-semibold text-lg">Gắn video quảng cáo tại đây</span>
+                      <span className="text-slate-500 text-sm mt-2 max-w-md">
+                        Cập nhật link embed vào PROMO_VIDEO_URL hoặc mở GitHub để xem source và tài liệu demo.
+                      </span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── CTA FINAL ─── */}
       <section className="py-28 border-t border-slate-800/50">
         <div className="container mx-auto px-6 max-w-3xl text-center">
