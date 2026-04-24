@@ -5,7 +5,14 @@ import { api } from '../api/client'
 
 export default function Register() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ username: '', email: '', github_url: '', bio: '' })
+  const [form, setForm] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirm: '',
+    github_url: '',
+    bio: '',
+  })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ api_key: string; username: string } | null>(null)
@@ -17,11 +24,20 @@ export default function Register() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+    if (form.password.length < 6) {
+      setError('Mật khẩu phải có ít nhất 6 ký tự')
+      return
+    }
+    if (form.password !== form.confirm) {
+      setError('Mật khẩu xác nhận không khớp')
+      return
+    }
     setLoading(true)
     try {
       const res = await api.register({
         username: form.username.trim(),
         email: form.email.trim(),
+        password: form.password,
         github_url: form.github_url.trim() || undefined,
         bio: form.bio.trim() || undefined,
       })
@@ -144,6 +160,38 @@ export default function Register() {
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Mật khẩu <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              value={form.password}
+              onChange={update('password')}
+              placeholder="Ít nhất 6 ký tự"
+              className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Xác nhận mật khẩu <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              value={form.confirm}
+              onChange={update('confirm')}
+              placeholder="Nhập lại mật khẩu"
+              className="w-full px-3 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               GitHub URL <span className="text-slate-500 text-xs">(tuỳ chọn)</span>
             </label>
             <input
@@ -188,7 +236,7 @@ export default function Register() {
         <p className="mt-5 text-center text-sm text-slate-400">
           Đã có tài khoản?{' '}
           <Link to="/login" className="text-teal-400 hover:text-teal-300">
-            Đăng nhập với API Key
+            Đăng nhập
           </Link>
         </p>
       </div>

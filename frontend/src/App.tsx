@@ -8,6 +8,11 @@ import Register from './pages/Register'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import AdminPanel from './pages/AdminPanel'
+import DocsList from './pages/DocsList'
+import DocDetail from './pages/DocDetail'
+import Forum from './pages/Forum'
+import ForumDetail from './pages/ForumDetail'
+import ForumNew from './pages/ForumNew'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const apiKey = useAuthStore((s) => s.apiKey)
@@ -89,6 +94,11 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/browse" element={<Browse />} />
+        <Route path="/docs" element={<DocsList />} />
+        <Route path="/docs/:pluginType" element={<DocDetail />} />
+        <Route path="/forum" element={<Forum />} />
+        <Route path="/forum/new" element={<PrivateRoute><ForumNew /></PrivateRoute>} />
+        <Route path="/forum/:threadId" element={<ForumDetail />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route

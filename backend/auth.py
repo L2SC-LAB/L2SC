@@ -1,4 +1,5 @@
 import secrets
+import bcrypt
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
@@ -14,6 +15,21 @@ def generate_api_key() -> str:
 
 def generate_public_token() -> str:
     return secrets.token_urlsafe(16)
+
+
+def hash_password(raw: str) -> str:
+    # bcrypt giới hạn 72 bytes — truncate để tránh ValueError
+    pwd = raw.encode("utf-8")[:72]
+    return bcrypt.hashpw(pwd, bcrypt.gensalt()).decode("utf-8")
+
+
+def verify_password(raw: str, hashed: str) -> bool:
+    if not hashed:
+        return False
+    try:
+        return bcrypt.checkpw(raw.encode("utf-8")[:72], hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 
 def _get_contributor(api_key: str, db: Session) -> db_models.Contributor:

@@ -10,11 +10,15 @@ from backend import db_models
 from datetime import datetime
 from backend.models import (
     ContributorRegister, ContributorOut,
+    LoginRequest, LoginResponse, SetPasswordRequest,
     NodeRegister, NodeOut,
     WorkflowSubmit, WorkflowUpdate, WorkflowOut,
     NodeAuthRequest, NodeAuthResponse,
 )
-from backend.auth import get_contributor, generate_api_key, generate_public_token
+from backend.auth import (
+    get_contributor, generate_api_key, generate_public_token,
+    hash_password, verify_password,
+)
 from backend.routers.public import _to_out
 
 router = APIRouter(prefix="/api/contribute", tags=["contribute"])
@@ -97,6 +101,7 @@ def register(body: ContributorRegister, db: Session = Depends(get_db)):
         username=body.username,
         email=body.email,
         api_key=api_key,
+        hashed_password=hash_password(body.password) if body.password else None,
         github_url=body.github_url,
         bio=body.bio,
     )
@@ -106,8 +111,49 @@ def register(body: ContributorRegister, db: Session = Depends(get_db)):
         "id": contributor.id,
         "username": contributor.username,
         "api_key": api_key,
-        "message": "Đăng ký thành công. Lưu api_key lại — không thể khôi phục.",
+        "message": (
+            "Đăng ký thành công. Lưu api_key lại — có thể đăng nhập lại bằng email/mật khẩu."
+            if body.password else
+            "Đăng ký thành công. Lưu api_key lại — không thể khôi phục."
+        ),
     }
+
+
+# ---------- Login bằng email/username + password ----------
+
+@router.post("/login", response_model=LoginResponse)
+def login(body: LoginRequest, db: Session = Depends(get_db)):
+    """
+    Đăng nhập bằng email HOẶC username + password.
+    Trả về api_key để FE lưu và dùng như trước (header X-API-Key).
+    """
+    ident = body.identifier.strip()
+    contributor = db.query(db_models.Contributor).filter(
+        (db_models.Contributor.email == ident) | (db_models.Contributor.username == ident),
+        db_models.Contributor.is_active == True,
+    ).first()
+    if not contributor or not verify_password(body.password, contributor.hashed_password or ""):
+        raise HTTPException(status_code=401, detail="Email/username hoặc mật khẩu không đúng")
+    return LoginResponse(api_key=contributor.api_key, contributor=contributor)
+
+
+@router.post("/set-password")
+def set_password(
+    body: SetPasswordRequest,
+    contributor=Depends(get_contributor),
+    db: Session = Depends(get_db),
+):
+    """
+    Set/đổi mật khẩu cho contributor đang login bằng api_key.
+    - Nếu chưa có password trước đó: chỉ cần new_password.
+    - Nếu đã có: phải cung cấp current_password đúng.
+    """
+    if contributor.hashed_password:
+        if not body.current_password or not verify_password(body.current_password, contributor.hashed_password):
+            raise HTTPException(status_code=400, detail="Mật khẩu hiện tại không đúng")
+    contributor.hashed_password = hash_password(body.new_password)
+    db.commit()
+    return {"message": "Đã cập nhật mật khẩu"}
 
 
 @router.get("/me", response_model=ContributorOut)

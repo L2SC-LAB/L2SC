@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import {
   Server, Workflow, Plus, Trash2, X, Loader2, AlertCircle,
   CheckCircle2, Clock, Zap, Hash, RefreshCw, ExternalLink,
-  User, Shield, Tag, Star,
+  User, Shield, Tag, Star, Lock, KeyRound,
 } from 'lucide-react'
 import { api, NodeOut, WorkflowOut } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import Header from '../components/Header'
+import ViewToggle, { useViewMode } from '../components/ViewToggle'
 
 type Tab = 'workflows' | 'nodes'
 
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const [wfCount, setWfCount] = useState<{ total: number; pending: number; approved: number }>({ total: 0, pending: 0, approved: 0 })
   const [nodeCount, setNodeCount] = useState(0)
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
+  const [showPwdModal, setShowPwdModal] = useState(false)
 
   useEffect(() => {
     refreshMe()
@@ -82,17 +84,47 @@ export default function Dashboard() {
                 )}
               </div>
             </div>
-            {contributor?.is_admin && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => navigate('/admin')}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 rounded-lg text-sm transition"
+                onClick={() => setShowPwdModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-700/40 hover:bg-slate-700/70 text-slate-200 border border-slate-600 rounded-lg text-sm transition"
+                title={contributor?.has_password ? 'Đổi mật khẩu' : 'Set mật khẩu lần đầu — để lần sau login bằng email/password thay vì API key'}
               >
-                <Shield size={14} />
-                <span className="hidden sm:inline">Admin Panel</span>
-                <span className="sm:hidden">Admin</span>
+                {contributor?.has_password ? <Lock size={14} /> : <KeyRound size={14} />}
+                <span className="hidden sm:inline">
+                  {contributor?.has_password ? 'Đổi mật khẩu' : 'Set mật khẩu'}
+                </span>
               </button>
-            )}
+              {contributor?.is_admin && (
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 rounded-lg text-sm transition"
+                >
+                  <Shield size={14} />
+                  <span className="hidden sm:inline">Admin Panel</span>
+                  <span className="sm:hidden">Admin</span>
+                </button>
+              )}
+            </div>
           </div>
+
+          {!contributor?.has_password && (
+            <div className="mb-4 flex items-start gap-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <AlertCircle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <p className="text-amber-200 font-medium">Bạn chưa set mật khẩu</p>
+                <p className="text-amber-300/80 text-xs mt-0.5">
+                  Đang đăng nhập bằng API Key. Set mật khẩu để lần sau đăng nhập bằng email + password thay vì phải nhớ API Key dài.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowPwdModal(true)}
+                className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 rounded text-xs font-medium transition whitespace-nowrap"
+              >
+                Set mật khẩu
+              </button>
+            </div>
+          )}
 
           {/* Stat cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
@@ -171,6 +203,161 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {showPwdModal && (
+        <ChangePasswordModal
+          hasPassword={!!contributor?.has_password}
+          onClose={() => setShowPwdModal(false)}
+          onSuccess={() => {
+            setShowPwdModal(false)
+            refreshMe()
+            showToast('ok', 'Đã cập nhật mật khẩu')
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ---------- ChangePasswordModal ----------
+
+function ChangePasswordModal({
+  hasPassword, onClose, onSuccess,
+}: {
+  hasPassword: boolean
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (next.length < 6) {
+      setError('Mật khẩu mới phải có ít nhất 6 ký tự')
+      return
+    }
+    if (next !== confirm) {
+      setError('Mật khẩu xác nhận không khớp')
+      return
+    }
+    setLoading(true)
+    try {
+      await api.setPassword({
+        new_password: next,
+        current_password: hasPassword ? current : undefined,
+      })
+      onSuccess()
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Không thể cập nhật mật khẩu')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div
+        className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Lock size={18} className="text-teal-400" />
+              {hasPassword ? 'Đổi mật khẩu' : 'Set mật khẩu lần đầu'}
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">
+              {hasPassword
+                ? 'Nhập mật khẩu hiện tại và mật khẩu mới'
+                : 'Từ lần sau có thể đăng nhập bằng email/username + mật khẩu thay vì API Key'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-3 flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/40 rounded-lg text-red-300 text-sm">
+            <AlertCircle size={14} />
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={submit} className="space-y-3">
+          {hasPassword && (
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                Mật khẩu hiện tại
+              </label>
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                value={current}
+                onChange={(e) => setCurrent(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Mật khẩu mới
+            </label>
+            <input
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+              placeholder="Ít nhất 6 ký tự"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Xác nhận mật khẩu mới
+            </label>
+            <input
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={6}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition text-sm"
+            >
+              Huỷ
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-lg transition text-sm font-medium disabled:opacity-50"
+            >
+              {loading ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
+              {hasPassword ? 'Cập nhật' : 'Set mật khẩu'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
@@ -239,6 +426,7 @@ function WorkflowsTab({
   const [loading, setLoading] = useState(true)
   const [showSubmit, setShowSubmit] = useState(false)
   const [editTarget, setEditTarget] = useState<WorkflowOut | null>(null)
+  const [viewMode, setViewMode] = useViewMode('dashboard-workflows', 'list')
 
   const reload = async () => {
     setLoading(true)
@@ -270,6 +458,7 @@ function WorkflowsTab({
       <div className="flex items-center justify-between mb-3">
         <span className="text-slate-400 text-sm">{items.length} workflow</span>
         <div className="flex gap-2">
+          <ViewToggle mode={viewMode} onChange={setViewMode} />
           <button
             onClick={reload}
             disabled={loading}
@@ -308,7 +497,7 @@ function WorkflowsTab({
             Submit workflow đầu tiên
           </button>
         </div>
-      ) : (
+      ) : viewMode === 'list' ? (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg">
           {items.map((wf, idx) => (
             <WorkflowRow
@@ -316,6 +505,17 @@ function WorkflowsTab({
               wf={wf}
               isFirst={idx === 0}
               isLast={idx === items.length - 1}
+              onEdit={() => setEditTarget(wf)}
+              onDelete={() => del(wf.id, wf.title)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {items.map((wf) => (
+            <WorkflowCard
+              key={wf.id}
+              wf={wf}
               onEdit={() => setEditTarget(wf)}
               onDelete={() => del(wf.id, wf.title)}
             />
@@ -422,6 +622,88 @@ function WorkflowRow({
         >
           <Trash2 size={14} />
         </button>
+      </div>
+    </div>
+  )
+}
+
+function WorkflowCard({
+  wf, onEdit, onDelete,
+}: {
+  wf: WorkflowOut
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <div className="group relative p-4 bg-slate-800/60 border border-slate-700 hover:border-teal-500/50 rounded-lg transition flex flex-col">
+      <div className="flex items-start gap-3 mb-2">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 flex items-center justify-center shrink-0">
+          <Workflow size={15} className="text-teal-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold text-white truncate" title={wf.title}>{wf.title}</h3>
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {wf.is_approved ? (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-500/10 text-emerald-300 text-[10px] rounded border border-emerald-500/30">
+                <CheckCircle2 size={9} /> Đã duyệt
+              </span>
+            ) : wf.is_rejected ? (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-red-500/10 text-red-300 text-[10px] rounded border border-red-500/30">
+                Từ chối
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-500/10 text-amber-300 text-[10px] rounded border border-amber-500/30">
+                <Clock size={9} /> Chờ duyệt
+              </span>
+            )}
+            {wf.has_live_node && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-teal-500/10 text-teal-300 text-[10px] rounded border border-teal-500/30">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-teal-400" />
+                </span>
+                Live
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {wf.description && (
+        <p className="text-xs text-slate-400 line-clamp-2 mb-3">{wf.description}</p>
+      )}
+
+      <div className="flex items-center gap-2 text-xs text-slate-500 mb-3 flex-wrap">
+        {wf.category && (
+          <span className="inline-flex items-center gap-0.5">
+            <Tag size={9} />{wf.category.toUpperCase()}
+          </span>
+        )}
+        <span>v{wf.version}</span>
+        <span className="inline-flex items-center gap-0.5"><Zap size={9} />{wf.call_count}</span>
+        {(wf.star_count ?? 0) > 0 && (
+          <span className="inline-flex items-center gap-0.5 text-amber-400/70">
+            <Star size={9} />{wf.star_count}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between pt-2 border-t border-slate-700/50">
+        <span className="text-[11px] text-slate-500">{formatRelative(wf.updated_at)}</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onEdit}
+            className="px-2 py-1 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white text-xs rounded transition"
+          >
+            Sửa
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded transition"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -589,6 +871,7 @@ function NodesTab({
   const [items, setItems] = useState<NodeOut[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
+  const [viewMode, setViewMode] = useViewMode('dashboard-nodes', 'list')
 
   const reload = async () => {
     setLoading(true)
@@ -613,6 +896,7 @@ function NodesTab({
       <div className="flex items-center justify-between mb-3">
         <span className="text-slate-400 text-sm">{items.length} node đã đăng ký</span>
         <div className="flex gap-2">
+          <ViewToggle mode={viewMode} onChange={setViewMode} />
           <button
             onClick={reload}
             disabled={loading}
@@ -653,58 +937,16 @@ function NodesTab({
             Đăng ký node đầu tiên
           </button>
         </div>
-      ) : (
+      ) : viewMode === 'list' ? (
         <div className="bg-slate-800/40 border border-slate-700 rounded-lg">
           {items.map((n, idx) => (
-            <div
-              key={n.id}
-              className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-slate-700/30 transition group ${
-                idx < items.length - 1 ? 'border-b border-slate-700/50' : ''
-              } ${idx === 0 ? 'rounded-t-lg' : ''} ${idx === items.length - 1 ? 'rounded-b-lg' : ''}`}
-            >
-              {/* Status dot */}
-              <div className="relative shrink-0">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500/20 to-blue-500/20 border border-sky-500/30 flex items-center justify-center">
-                  <Server size={15} className="text-sky-400" />
-                </div>
-                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${n.is_active ? 'bg-emerald-400' : 'bg-slate-500'}`} />
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-sm font-medium text-white truncate">{n.name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
-                    n.is_active
-                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                      : 'bg-slate-700 text-slate-400 border-slate-600'
-                  }`}>
-                    {n.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500 flex-wrap">
-                  <a
-                    href={n.base_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-0.5 hover:text-teal-400 transition truncate max-w-xs"
-                  >
-                    <ExternalLink size={9} />{n.base_url}
-                  </a>
-                  {n.last_seen_at && (
-                    <span className="hidden sm:inline">Last seen: {formatRelative(n.last_seen_at)}</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Delete */}
-              <button
-                onClick={() => del(n.id, n.name)}
-                className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
+            <NodeRow key={n.id} n={n} isLast={idx === items.length - 1} isFirst={idx === 0} onDelete={() => del(n.id, n.name)} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {items.map((n) => (
+            <NodeCard key={n.id} n={n} onDelete={() => del(n.id, n.name)} />
           ))}
         </div>
       )}
@@ -717,6 +959,110 @@ function NodesTab({
         />
       )}
     </>
+  )
+}
+
+function NodeRow({
+  n, isFirst, isLast, onDelete,
+}: {
+  n: NodeOut
+  isFirst: boolean
+  isLast: boolean
+  onDelete: () => void
+}) {
+  return (
+    <div
+      className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-slate-700/30 transition group ${
+        !isLast ? 'border-b border-slate-700/50' : ''
+      } ${isFirst ? 'rounded-t-lg' : ''} ${isLast ? 'rounded-b-lg' : ''}`}
+    >
+      <div className="relative shrink-0">
+        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500/20 to-blue-500/20 border border-sky-500/30 flex items-center justify-center">
+          <Server size={15} className="text-sky-400" />
+        </div>
+        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${n.is_active ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-sm font-medium text-white truncate">{n.name}</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+            n.is_active
+              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+              : 'bg-slate-700 text-slate-400 border-slate-600'
+          }`}>
+            {n.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500 flex-wrap">
+          <a
+            href={n.base_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-0.5 hover:text-teal-400 transition truncate max-w-xs"
+          >
+            <ExternalLink size={9} />{n.base_url}
+          </a>
+          {n.last_seen_at && (
+            <span className="hidden sm:inline">Last seen: {formatRelative(n.last_seen_at)}</span>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onDelete}
+        className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  )
+}
+
+function NodeCard({ n, onDelete }: { n: NodeOut; onDelete: () => void }) {
+  return (
+    <div className="group relative p-4 bg-slate-800/60 border border-slate-700 hover:border-sky-500/50 rounded-lg transition flex flex-col">
+      <div className="flex items-start gap-3 mb-3">
+        <div className="relative shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-sky-500/20 to-blue-500/20 border border-sky-500/30 flex items-center justify-center">
+            <Server size={16} className="text-sky-400" />
+          </div>
+          <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-slate-900 ${n.is_active ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold text-white truncate" title={n.name}>{n.name}</h3>
+          <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded border ${
+            n.is_active
+              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+              : 'bg-slate-700 text-slate-400 border-slate-600'
+          }`}>
+            {n.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+      </div>
+
+      <a
+        href={n.base_url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1 text-xs text-slate-400 hover:text-teal-400 transition truncate mb-2"
+      >
+        <ExternalLink size={11} />
+        <span className="truncate">{n.base_url}</span>
+      </a>
+
+      {n.last_seen_at && (
+        <p className="text-[11px] text-slate-500 mb-3">Last seen: {formatRelative(n.last_seen_at)}</p>
+      )}
+
+      <div className="mt-auto pt-2 border-t border-slate-700/50 flex items-center justify-between">
+        <span className="text-[11px] text-slate-500">Added {formatRelative(n.created_at)}</span>
+        <button
+          onClick={onDelete}
+          className="p-1 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded transition"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
+    </div>
   )
 }
 

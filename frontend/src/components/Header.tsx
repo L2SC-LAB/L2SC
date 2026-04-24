@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom'
-import { Globe, LayoutDashboard, LogOut, LogIn, UserPlus, ShieldCheck } from 'lucide-react'
+import { Globe, LayoutDashboard, LogOut, LogIn, UserPlus, ShieldCheck, BookOpen, MessagesSquare } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
 export default function Header() {
@@ -32,6 +32,20 @@ export default function Header() {
             className="px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
           >
             Browse
+          </Link>
+          <Link
+            to="/docs"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+          >
+            <BookOpen size={14} />
+            Docs
+          </Link>
+          <Link
+            to="/forum"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+          >
+            <MessagesSquare size={14} />
+            Forum
           </Link>
 
           {apiKey ? (

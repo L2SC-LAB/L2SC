@@ -8,6 +8,7 @@ import {
 import { api, WorkflowOut, WorkflowDetail, RunOut } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 import Header from '../components/Header'
+import ViewToggle, { useViewMode } from '../components/ViewToggle'
 
 function formatRelative(iso?: string | null) {
   if (!iso) return ''
@@ -41,6 +42,7 @@ export default function Browse() {
   const [detail, setDetail] = useState<WorkflowDetail | null>(null)
   const [executeTarget, setExecuteTarget] = useState<WorkflowOut | null>(null)
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
+  const [viewMode, setViewMode] = useViewMode('browse', 'grid')
 
   const fetchItems = useCallback(async (q?: string, cat?: string) => {
     setLoading(true)
@@ -136,35 +138,57 @@ export default function Browse() {
           </div>
         </div>
 
-        {/* Stats bar */}
-        <div className="mb-6 flex items-center gap-2 text-sm text-slate-400">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/60 border border-slate-700 rounded">
-            <Globe size={12} className="text-teal-400" />
-            {items.length} workflow{query || category ? ' khớp' : ' công khai'}
-          </span>
-          {(query || category) && (
-            <button
-              onClick={() => { setQuery(''); setCategory('') }}
-              className="text-xs text-teal-400 hover:text-teal-300 underline"
-            >
-              Xóa filter
-            </button>
-          )}
+        {/* Stats bar + view toggle */}
+        <div className="mb-6 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm text-slate-400">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-800/60 border border-slate-700 rounded">
+              <Globe size={12} className="text-teal-400" />
+              {items.length} workflow{query || category ? ' khớp' : ' công khai'}
+            </span>
+            {(query || category) && (
+              <button
+                onClick={() => { setQuery(''); setCategory('') }}
+                className="text-xs text-teal-400 hover:text-teal-300 underline"
+              >
+                Xóa filter
+              </button>
+            )}
+          </div>
+          <ViewToggle mode={viewMode} onChange={setViewMode} />
         </div>
 
-        {/* Grid */}
+        {/* Grid OR List */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-56 bg-slate-800/40 border border-slate-700 rounded-xl animate-pulse" />
-            ))}
-          </div>
+          viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-56 bg-slate-800/40 border border-slate-700 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="h-16 bg-slate-800/40 border border-slate-700 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          )
         ) : items.length === 0 ? (
           <EmptyState query={query} />
-        ) : (
+        ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {items.map((wf) => (
               <WorkflowCard
+                key={wf.id}
+                wf={wf}
+                onDetail={() => openDetail(wf.id)}
+                onExecute={() => setExecuteTarget(wf)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-slate-800/30 border border-slate-800 rounded-xl divide-y divide-slate-800 overflow-hidden">
+            {items.map((wf) => (
+              <WorkflowRow
                 key={wf.id}
                 wf={wf}
                 onDetail={() => openDetail(wf.id)}
@@ -288,6 +312,85 @@ function WorkflowCard({ wf, onDetail, onExecute }: { wf: WorkflowOut; onDetail: 
             </button>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------- WorkflowRow (list view) ----------
+
+function WorkflowRow({ wf, onDetail, onExecute }: { wf: WorkflowOut; onDetail: () => void; onExecute: () => void }) {
+  return (
+    <div className="group flex items-center gap-4 px-4 py-3 hover:bg-slate-800/60 transition">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+          <h3 className="font-semibold text-white text-sm truncate" title={wf.title}>
+            {wf.title}
+          </h3>
+          {wf.has_live_node && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500/10 text-emerald-300 text-[10px] rounded border border-emerald-500/30 flex-shrink-0">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+              </span>
+              Live
+            </span>
+          )}
+          {wf.category && (
+            <span className="px-1.5 py-0.5 bg-sky-500/10 text-sky-300 text-[10px] rounded border border-sky-500/30 flex-shrink-0">
+              {wf.category.toUpperCase()}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-slate-400 line-clamp-1">
+          {wf.description || <span className="italic text-slate-600">Chưa có mô tả</span>}
+        </p>
+      </div>
+      <div className="hidden md:flex items-center gap-3 text-xs text-slate-500 shrink-0">
+        <span className="inline-flex items-center gap-1">
+          <User size={11} />
+          {wf.contributor_username}
+        </span>
+        {(wf.star_count ?? 0) > 0 && (
+          <span className="inline-flex items-center gap-1 text-amber-400/80">
+            <Star size={11} className={(wf.star_count ?? 0) >= 10 ? 'fill-amber-400' : ''} />
+            {wf.star_count}
+          </span>
+        )}
+        <span className="inline-flex items-center gap-1">
+          <Zap size={11} />
+          {wf.call_count}
+        </span>
+        <span>{formatRelative(wf.updated_at)}</span>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={onDetail}
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-200 text-xs rounded-lg transition"
+          title="Chi tiết"
+        >
+          <Eye size={13} />
+          <span className="hidden sm:inline">Chi tiết</span>
+        </button>
+        {wf.has_live_node ? (
+          <button
+            onClick={onExecute}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 text-xs rounded-lg transition border border-teal-500/30"
+            title="Chạy workflow"
+          >
+            <Play size={13} />
+            <span className="hidden sm:inline">Chạy</span>
+          </button>
+        ) : (
+          <button
+            onClick={onDetail}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-700/30 hover:bg-slate-700/50 text-slate-400 text-xs rounded-lg transition border border-slate-700"
+            title="Import"
+          >
+            <Download size={13} />
+            <span className="hidden sm:inline">Import</span>
+          </button>
+        )}
       </div>
     </div>
   )

@@ -16,6 +16,8 @@ from backend.auth import generate_api_key
 from backend.routers.public import router as public_router, runs_router, stats_router
 from backend.routers.contribute import router as contribute_router
 from backend.routers.admin import router as admin_router
+from backend.routers.docs import router as docs_router
+from backend.routers.forum import router as forum_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -77,6 +79,8 @@ app.include_router(public_router)
 app.include_router(runs_router)
 app.include_router(contribute_router)
 app.include_router(admin_router)
+app.include_router(docs_router)
+app.include_router(forum_router)
 
 
 @app.get("/health")

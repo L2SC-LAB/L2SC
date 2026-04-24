@@ -15,6 +15,7 @@ class Contributor(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     api_key = Column(String, unique=True, index=True, nullable=False)   # Bearer token dùng cho API
+    hashed_password = Column(String, nullable=True)   # Optional — login bằng email/username + password để lấy api_key
     github_url = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
@@ -23,6 +24,10 @@ class Contributor(Base):
 
     nodes = relationship("L2SNode", back_populates="owner", cascade="all, delete-orphan")
     workflows = relationship("PublicWorkflow", back_populates="contributor", cascade="all, delete-orphan")
+
+    @property
+    def has_password(self) -> bool:
+        return bool(self.hashed_password)
 
 
 class L2SNode(Base):
@@ -79,6 +84,64 @@ class PublicWorkflow(Base):
     contributor = relationship("Contributor", back_populates="workflows")
     node = relationship("L2SNode", back_populates="workflows")
     runs = relationship("WorkflowRun", back_populates="workflow", cascade="all, delete-orphan")
+
+
+class ForumThread(Base):
+    """
+    Thread (bài đăng / câu hỏi) trên forum L2S.
+    Mọi contributor có api_key đều có thể tạo; guest chỉ xem.
+    """
+    __tablename__ = "forum_threads"
+
+    id = Column(String, primary_key=True, index=True)
+    title = Column(String, nullable=False, index=True)
+    body_md = Column(Text, nullable=False)
+    category = Column(String, nullable=False, index=True)   # qa / tutorial / showcase / announcement
+    author_id = Column(String, ForeignKey("contributors.id", ondelete="CASCADE"), nullable=False, index=True)
+    is_pinned = Column(Boolean, default=False, nullable=False, index=True)
+    is_locked = Column(Boolean, default=False, nullable=False)
+    view_count = Column(Integer, default=0, nullable=False)
+    reply_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    author = relationship("Contributor", backref="forum_threads")
+    replies = relationship("ForumReply", back_populates="thread", cascade="all, delete-orphan")
+
+
+class ForumReply(Base):
+    """Trả lời cho một thread. Không có nested — flat 1 level."""
+    __tablename__ = "forum_replies"
+
+    id = Column(String, primary_key=True, index=True)
+    thread_id = Column(String, ForeignKey("forum_threads.id", ondelete="CASCADE"), nullable=False, index=True)
+    body_md = Column(Text, nullable=False)
+    author_id = Column(String, ForeignKey("contributors.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    thread = relationship("ForumThread", back_populates="replies")
+    author = relationship("Contributor", backref="forum_replies")
+
+
+class NodeDoc(Base):
+    """
+    Doc cho từng plugin type trên L2S. Auto-section (config, inputs/outputs) pull từ L2S node metadata —
+    KHÔNG lưu ở đây. Chỉ lưu phần admin viết tay để giải thích cho non-tech user.
+    """
+    __tablename__ = "node_docs"
+
+    plugin_type = Column(String, primary_key=True)   # trùng với BaseNodeExecutor.type bên L2S
+    what_it_does = Column(Text, nullable=True)       # 1 câu: "Node này làm gì?"
+    when_to_use = Column(Text, nullable=True)        # markdown bullet: "Khi nào dùng?"
+    example_md = Column(Text, nullable=True)         # markdown: "Ví dụ thực tế"
+    faq_md = Column(Text, nullable=True)             # markdown: "Lỗi thường gặp / FAQ"
+    updated_by = Column(String, ForeignKey("contributors.id", ondelete="SET NULL"), nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    @property
+    def has_content(self) -> bool:
+        return any([self.what_it_does, self.when_to_use, self.example_md, self.faq_md])
 
 
 class WorkflowRun(Base):

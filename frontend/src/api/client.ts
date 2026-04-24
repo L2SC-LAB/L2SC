@@ -60,7 +60,107 @@ export interface ContributorOut {
   github_url: string | null
   bio: string | null
   is_admin: boolean
+  has_password: boolean
   created_at: string
+}
+
+export interface LoginResponse {
+  api_key: string
+  contributor: ContributorOut
+}
+
+// ---------- Docs ----------
+
+export interface NodeDocSummary {
+  plugin_type: string
+  label: string
+  description: string | null
+  category: string | null
+  icon: string | null
+  has_doc: boolean
+}
+
+export interface NodeDocFieldSchema {
+  name: string
+  label: string | null
+  type: string | null
+  required: boolean
+  default: any
+  description: string | null
+  options: any[] | null
+}
+
+export interface NodeDocIO {
+  name: string
+  description: string | null
+  schema_hint: any
+}
+
+export interface NodeDocDetail {
+  plugin_type: string
+  label: string
+  description: string | null
+  category: string | null
+  icon: string | null
+  config_fields: NodeDocFieldSchema[]
+  inputs: NodeDocIO[]
+  outputs: NodeDocIO[]
+  what_it_does: string | null
+  when_to_use: string | null
+  example_md: string | null
+  faq_md: string | null
+  doc_updated_at: string | null
+  doc_updated_by: string | null
+}
+
+export interface NodeDocEdit {
+  what_it_does?: string | null
+  when_to_use?: string | null
+  example_md?: string | null
+  faq_md?: string | null
+}
+
+// ---------- Forum ----------
+
+export type ForumCategory = 'qa' | 'tutorial' | 'showcase' | 'announcement'
+
+export interface ForumAuthor {
+  id: string
+  username: string
+  is_admin: boolean
+}
+
+export interface ForumThreadSummary {
+  id: string
+  title: string
+  category: ForumCategory
+  author: ForumAuthor
+  is_pinned: boolean
+  is_locked: boolean
+  view_count: number
+  reply_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ForumReply {
+  id: string
+  thread_id: string
+  body_md: string
+  author: ForumAuthor
+  created_at: string
+  updated_at: string
+}
+
+export interface ForumThreadDetail extends ForumThreadSummary {
+  body_md: string
+  replies: ForumReply[]
+}
+
+export interface ForumStats {
+  total_threads: number
+  by_category: Record<ForumCategory, number>
+  total_replies: number
 }
 
 export interface Stats {
@@ -96,13 +196,25 @@ export const api = {
     http.get<RunOut>(`/api/runs/${run_id}`).then((r) => r.data),
 
   // ---------- Contributor ----------
-  register: (body: { username: string; email: string; github_url?: string; bio?: string }) =>
+  register: (body: {
+    username: string
+    email: string
+    password?: string
+    github_url?: string
+    bio?: string
+  }) =>
     http
       .post<{ id: string; username: string; api_key: string; message: string }>(
         '/api/contribute/register',
         body
       )
       .then((r) => r.data),
+
+  login: (body: { identifier: string; password: string }) =>
+    http.post<LoginResponse>('/api/contribute/login', body).then((r) => r.data),
+
+  setPassword: (body: { new_password: string; current_password?: string }) =>
+    http.post<{ message: string }>('/api/contribute/set-password', body).then((r) => r.data),
 
   getMe: () => http.get<ContributorOut>('/api/contribute/me').then((r) => r.data),
 
@@ -170,6 +282,45 @@ export const api = {
   getStats: () => http.get<Stats>('/api/stats').then((r) => r.data),
 
   getAdminStats: () => http.get<AdminStats>('/api/admin/stats').then((r) => r.data),
+
+  // ---------- Docs ----------
+  listDocs: () => http.get<NodeDocSummary[]>('/api/docs').then((r) => r.data),
+
+  getDoc: (pluginType: string) =>
+    http.get<NodeDocDetail>(`/api/docs/${pluginType}`).then((r) => r.data),
+
+  upsertDoc: (pluginType: string, body: NodeDocEdit) =>
+    http.put<NodeDocDetail>(`/api/docs/${pluginType}`, body).then((r) => r.data),
+
+  refreshDocsCache: () =>
+    http.post<{ count: number; source: string }>('/api/docs/_refresh-cache').then((r) => r.data),
+
+  // ---------- Forum ----------
+  forumStats: () => http.get<ForumStats>('/api/forum/stats').then((r) => r.data),
+
+  listThreads: (params?: { category?: ForumCategory; q?: string; sort?: string; skip?: number; limit?: number }) =>
+    http.get<ForumThreadSummary[]>('/api/forum/threads', { params }).then((r) => r.data),
+
+  getThread: (id: string) => http.get<ForumThreadDetail>(`/api/forum/threads/${id}`).then((r) => r.data),
+
+  createThread: (body: { title: string; body_md: string; category: ForumCategory }) =>
+    http.post<ForumThreadDetail>('/api/forum/threads', body).then((r) => r.data),
+
+  updateThread: (id: string, body: { title?: string; body_md?: string; category?: ForumCategory }) =>
+    http.put<ForumThreadDetail>(`/api/forum/threads/${id}`, body).then((r) => r.data),
+
+  deleteThread: (id: string) => http.delete(`/api/forum/threads/${id}`).then((r) => r.data),
+
+  createReply: (threadId: string, body: { body_md: string }) =>
+    http.post<ForumReply>(`/api/forum/threads/${threadId}/replies`, body).then((r) => r.data),
+
+  updateReply: (replyId: string, body: { body_md: string }) =>
+    http.put<ForumReply>(`/api/forum/replies/${replyId}`, body).then((r) => r.data),
+
+  deleteReply: (replyId: string) => http.delete(`/api/forum/replies/${replyId}`).then((r) => r.data),
+
+  pinThread: (id: string) => http.post<ForumThreadSummary>(`/api/forum/threads/${id}/pin`).then((r) => r.data),
+  lockThread: (id: string) => http.post<ForumThreadSummary>(`/api/forum/threads/${id}/lock`).then((r) => r.data),
 
   // backward-compat kept for other callers
   getPendingWorkflows: () =>

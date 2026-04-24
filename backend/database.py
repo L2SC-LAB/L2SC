@@ -40,6 +40,15 @@ def init_db():
                     with engine.connect() as conn:
                         conn.execute(text(ddl))
                         conn.commit()
+
+        if "contributors" in insp.get_table_names():
+            ccols = {c["name"] for c in insp.get_columns("contributors")}
+            if "hashed_password" not in ccols:
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE contributors ADD COLUMN hashed_password VARCHAR"))
+                    conn.commit()
+
+        # Bảng node_docs được tạo bởi create_all ở trên; không cần ALTER thêm.
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning(f"[init_db] migration skip: {e}")
