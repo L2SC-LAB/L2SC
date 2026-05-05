@@ -23,14 +23,34 @@ L2SC nhẹ — chỉ 2 container (app + Postgres), không có Redis/MinIO/ML lib
 ```bash
 git clone https://github.com/ngohongthong1832004/L2SC.git
 cd L2SC
+```
 
-# Sinh .env
+Sinh `.env` (chọn theo OS):
+
+**Linux / macOS** (bash):
+
+```bash
 cat > .env <<EOF
 L2SC_POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
 L2SC_ADMIN_API_KEY=l2sc_$(python3 -c "import secrets; print(secrets.token_urlsafe(20))")
 EOF
+```
 
-# Build + start (có hot-reload cho dev)
+**Windows** (PowerShell):
+
+```powershell
+$pgpass = python -c "import secrets; print(secrets.token_urlsafe(24))"
+$apikey = python -c "import secrets; print('l2sc_' + secrets.token_urlsafe(20))"
+
+@"
+L2SC_POSTGRES_PASSWORD=$pgpass
+L2SC_ADMIN_API_KEY=$apikey
+"@ | Out-File -FilePath .env -Encoding ascii -NoNewline
+```
+
+Sau đó build + start (có hot-reload cho dev):
+
+```bash
 docker compose up -d --build
 ```
 
@@ -80,11 +100,27 @@ volumes:
   l2sc_postgres_data:
 ```
 
+**Linux / macOS**:
+
 ```bash
 cat > .env <<EOF
 L2SC_POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
 L2SC_ADMIN_API_KEY=l2sc_$(python3 -c "import secrets; print(secrets.token_urlsafe(20))")
 EOF
+
+docker compose up -d
+```
+
+**Windows** (PowerShell):
+
+```powershell
+$pgpass = python -c "import secrets; print(secrets.token_urlsafe(24))"
+$apikey = python -c "import secrets; print('l2sc_' + secrets.token_urlsafe(20))"
+
+@"
+L2SC_POSTGRES_PASSWORD=$pgpass
+L2SC_ADMIN_API_KEY=$apikey
+"@ | Out-File -FilePath .env -Encoding ascii -NoNewline
 
 docker compose up -d
 ```

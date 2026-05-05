@@ -800,14 +800,98 @@ export default function Landing() {
 // Install L2S section — hướng dẫn cài đặt cho user mới
 // ============================================================
 
-const QUICK_START_HUB = `# Hướng dẫn đầy đủ: https://hub.docker.com/r/baphongpine/l2s
-# Tóm tắt 3 bước:
+// docker-compose.yml content — render trong code block riêng có nút Copy + Download.
+const DOCKER_COMPOSE_YML = `services:
+  l2s:
+    image: baphongpine/l2s:latest
+    container_name: l2s-platform
+    restart: unless-stopped
+    ports:
+      - "9996:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:\${POSTGRES_PASSWORD}@postgres:5432/l2s_platform
+      - REDIS_URL=redis://redis:6379/0
+      - L2S_SECRET_KEY=\${L2S_SECRET_KEY}
+      - L2S_ARTIFACT_BACKEND=auto
+      - L2S_MINIO_ENDPOINT=minio:9000
+      - L2S_MINIO_ACCESS_KEY=\${L2S_MINIO_ACCESS_KEY}
+      - L2S_MINIO_SECRET_KEY=\${L2S_MINIO_SECRET_KEY}
+      - L2S_MINIO_BUCKET=l2s-artifacts
+      - L2S_CLUSTER_ENABLED=false
+      - L2S_CLUSTER_TOKEN=\${L2S_CLUSTER_TOKEN}
+      # Mặc định kết nối tới L2SC community tại l2s.io.vn
+      - L2SC_URL=https://l2s.io.vn
+      - L2SC_WEB_URL=https://l2s.io.vn
+      - L2SC_CONTRIBUTOR_API_KEY=\${L2SC_CONTRIBUTOR_API_KEY:-}
+      - L2S_CORS_ORIGINS=\${L2S_CORS_ORIGINS:-*}
+      - L2S_RATE_LIMIT_ENABLED=\${L2S_RATE_LIMIT_ENABLED:-true}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_started }
+      minio:    { condition: service_healthy }
+    volumes:
+      - plugin_deps:/plugin_deps
+      - vector_stores:/app/vector_stores
+      - agent_memory:/app/agent_memory
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true
+    mem_limit: 4g
 
-# 1. Tạo thư mục + file docker-compose.yml (copy từ Docker Hub overview)
-mkdir l2s && cd l2s
-# (tạo docker-compose.yml ở đây với content từ Docker Hub)
+  postgres:
+    image: postgres:15-alpine
+    container_name: l2s-platform-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=\${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      - POSTGRES_DB=l2s_platform
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 10
+    mem_limit: 1g
 
-# 2. Sinh .env với 5 secret random:
+  redis:
+    image: redis:7-alpine
+    container_name: l2s-platform-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    mem_limit: 512m
+
+  minio:
+    image: minio/minio:latest
+    container_name: l2s-platform-minio
+    restart: unless-stopped
+    ports:
+      - "9998:9001"
+    environment:
+      - MINIO_ROOT_USER=\${L2S_MINIO_ACCESS_KEY:-l2sadmin}
+      - MINIO_ROOT_PASSWORD=\${L2S_MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      retries: 5
+    mem_limit: 1g
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  plugin_deps:
+  vector_stores:
+  agent_memory:
+`
+
+const QUICK_START_HUB_UNIX = `# Linux / macOS — bash / zsh
+# Chạy trong cùng thư mục có docker-compose.yml ở trên
+
+# 1. Sinh .env với 5 secret random
 cat > .env <<EOF
 L2S_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
@@ -817,10 +901,32 @@ L2S_MINIO_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(3
 EOF
 chmod 600 .env
 
-# 3. Pull + start
+# 2. Pull image + start (lần đầu ~1.4GB)
 docker compose up -d
 
-# 4. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
+# 3. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
+
+const QUICK_START_HUB_WIN = `# Windows — PowerShell (KHÔNG dùng CMD/Command Prompt)
+# Chạy trong cùng thư mục có docker-compose.yml ở trên
+
+# 1. Sinh secrets random rồi ghi .env
+$secret  = python -c "import secrets; print(secrets.token_urlsafe(48))"
+$pgpass  = python -c "import secrets; print(secrets.token_urlsafe(24))"
+$cluster = python -c "import secrets; print(secrets.token_hex(32))"
+$minio   = python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+@"
+L2S_SECRET_KEY=$secret
+POSTGRES_PASSWORD=$pgpass
+L2S_CLUSTER_TOKEN=$cluster
+L2S_MINIO_ACCESS_KEY=l2sadmin
+L2S_MINIO_SECRET_KEY=$minio
+"@ | Out-File -FilePath .env -Encoding ascii -NoNewline
+
+# 2. Pull image + start (lần đầu ~1.4GB)
+docker compose up -d
+
+# 3. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
 
 const QUICK_START_SOURCE = `git clone https://github.com/ngohongthong1832004/L2S.git
 cd L2S
@@ -835,9 +941,12 @@ cd L2S
 
 function InstallL2SSection() {
   const [tab, setTab] = useState<'hub' | 'source'>('hub')
+  const [os, setOs] = useState<'unix' | 'win'>('unix')
   const [copied, setCopied] = useState(false)
+  const [composeCopied, setComposeCopied] = useState(false)
 
-  const code = tab === 'hub' ? QUICK_START_HUB : QUICK_START_SOURCE
+  const hubCode = os === 'unix' ? QUICK_START_HUB_UNIX : QUICK_START_HUB_WIN
+  const code = tab === 'hub' ? hubCode : QUICK_START_SOURCE
 
   const doCopy = async () => {
     try {
@@ -847,6 +956,28 @@ function InstallL2SSection() {
     } catch {
       setCopied(false)
     }
+  }
+
+  const doCopyCompose = async () => {
+    try {
+      await navigator.clipboard.writeText(DOCKER_COMPOSE_YML)
+      setComposeCopied(true)
+      setTimeout(() => setComposeCopied(false), 2000)
+    } catch {
+      setComposeCopied(false)
+    }
+  }
+
+  const doDownloadCompose = () => {
+    const blob = new Blob([DOCKER_COMPOSE_YML], { type: 'text/yaml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'docker-compose.yml'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -886,17 +1017,91 @@ function InstallL2SSection() {
               }`}
             >
               <Github size={14} />
-              From source (cho dev)
+              From source (Nếu đủ 183 sao)
             </button>
           </div>
         </div>
 
-        {/* Code block */}
+        {/* docker-compose.yml block — chỉ hiện khi tab=hub. Có nút Copy + Download */}
+        {tab === 'hub' && (
+          <div className="relative bg-slate-950 border border-blue-500/30 rounded-xl overflow-hidden shadow-2xl mb-4">
+            <div className="flex items-center justify-between px-4 py-2 bg-slate-900/80 border-b border-slate-800">
+              <div className="flex items-center gap-2 text-xs text-slate-300">
+                <Package size={13} className="text-blue-400" />
+                <span className="font-mono">docker-compose.yml</span>
+                <span className="px-1.5 py-0.5 text-[10px] bg-blue-500/15 text-blue-300 border border-blue-500/30 rounded">
+                  Bước 1 — copy hoặc download file này vào thư mục mới
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={doDownloadCompose}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 hover:text-white text-xs rounded transition border border-blue-500/40"
+                  title="Tải file docker-compose.yml"
+                >
+                  <Download size={12} />
+                  Download .yml
+                </button>
+                <button
+                  onClick={doCopyCompose}
+                  className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs rounded transition"
+                  title="Copy nội dung vào clipboard"
+                >
+                  {composeCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                  {composeCopied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+            <pre className="p-5 text-xs text-slate-200 font-mono overflow-x-auto leading-relaxed max-h-96 overflow-y-auto">
+              <code>{DOCKER_COMPOSE_YML}</code>
+            </pre>
+          </div>
+        )}
+
+        {/* OS toggle (chỉ hiện ở tab hub vì lệnh khác nhau giữa bash và PowerShell) */}
+        {tab === 'hub' && (
+          <div className="flex items-center justify-between mb-2 px-1">
+            <span className="text-xs text-slate-500">
+              Bước 2 — chọn OS để xem đúng cú pháp:
+            </span>
+            <div className="inline-flex items-center gap-1 p-0.5 bg-slate-800/60 border border-slate-700 rounded-md">
+              <button
+                onClick={() => setOs('unix')}
+                className={`px-3 py-1 rounded text-xs font-medium transition ${
+                  os === 'unix'
+                    ? 'bg-slate-700 text-white'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Linux / macOS
+              </button>
+              <button
+                onClick={() => setOs('win')}
+                className={`px-3 py-1 rounded text-xs font-medium transition ${
+                  os === 'win'
+                    ? 'bg-slate-700 text-white'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Windows (PowerShell)
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Terminal commands block (sinh .env + start) */}
         <div className="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
           <div className="flex items-center justify-between px-4 py-2 bg-slate-900/80 border-b border-slate-800">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Terminal size={13} />
-              <span className="font-mono">terminal</span>
+              <span className="font-mono">
+                {tab === 'hub' ? (os === 'unix' ? 'bash' : 'PowerShell') : 'terminal'}
+              </span>
+              {tab === 'hub' && (
+                <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded">
+                  Bước 2 — chạy trong cùng thư mục với compose ở trên
+                </span>
+              )}
             </div>
             <button
               onClick={doCopy}

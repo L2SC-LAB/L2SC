@@ -101,6 +101,8 @@ volumes:
 
 ### Bước 2 — Sinh `.env` random secrets
 
+**Linux / macOS** (bash / zsh):
+
 ```bash
 cat > .env <<EOF
 L2S_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
@@ -110,6 +112,23 @@ L2S_MINIO_ACCESS_KEY=l2sadmin
 L2S_MINIO_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
 EOF
 chmod 600 .env
+```
+
+**Windows** (PowerShell — KHÔNG dùng CMD/Command Prompt):
+
+```powershell
+$secret  = python -c "import secrets; print(secrets.token_urlsafe(48))"
+$pgpass  = python -c "import secrets; print(secrets.token_urlsafe(24))"
+$cluster = python -c "import secrets; print(secrets.token_hex(32))"
+$minio   = python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+@"
+L2S_SECRET_KEY=$secret
+POSTGRES_PASSWORD=$pgpass
+L2S_CLUSTER_TOKEN=$cluster
+L2S_MINIO_ACCESS_KEY=l2sadmin
+L2S_MINIO_SECRET_KEY=$minio
+"@ | Out-File -FilePath .env -Encoding ascii -NoNewline
 ```
 
 ### Bước 3 — Start
