@@ -1,229 +1,225 @@
-﻿# L2S - Low-code Data & AI Platform
+# 🌐 L2SC — Community space cho L2S
 
-L2S là nền tảng low-code giúp doanh nghiệp xây dựng workflow dữ liệu, AI và automation bằng giao diện kéo-thả. Thay vì phải ghép nhiều công cụ rời rạc hoặc phụ thuộc hoàn toàn vào SaaS nước ngoài, L2S hướng đến một giải pháp có thể tự triển khai, kiểm soát dữ liệu nội bộ và mở rộng theo nhu cầu thực tế của đội ngũ.
+> **L2SC** (L2S Communicate) là nơi cộng đồng người dùng L2S **share workflow, hỏi đáp, đọc docs** plugin. Đây không phải app để tự host — bạn truy cập trực tiếp tại **[l2s.io.vn](https://l2s.io.vn)**.
 
-L2SC là lớp cộng đồng của hệ sinh thái L2S: nơi chia sẻ, khám phá và tái sử dụng các workflow được xây dựng sẵn. Người dùng có thể tìm workflow phù hợp, import về L2S của mình, hoặc đóng góp workflow cho cộng đồng.
+Repo này chứa source code của community space (frontend + backend FastAPI). Phát triển công khai để mọi người contribute thread forum, workflow public, plugin docs.
 
-## Bài toán L2S giải quyết
+---
 
-Nhiều doanh nghiệp vừa và nhỏ có dữ liệu, có nhu cầu tự động hóa, có nhu cầu ứng dụng AI, nhưng thường gặp các rào cản:
+## Giới thiệu L2S — sản phẩm chính
 
-- Chi phí SaaS tăng nhanh khi số lượng workflow, user hoặc lượt chạy tăng lên
-- Dữ liệu nhạy cảm khó đưa lên cloud bên thứ ba
-- Đội ngũ không đủ thời gian để viết pipeline từ đầu cho từng bài toán
-- Công cụ automation phổ thông chưa đủ mạnh cho Big Data, ML, ETL và RAG
-- Việc chia sẻ workflow giữa các team còn thủ công, khó kiểm soát phiên bản và chất lượng
+**L2S** là platform **low-code Data + AI** mã nguồn mở:
 
-L2S tập trung vào hướng tiếp cận thực dụng: kéo-thả để tạo pipeline, tự host trên hạ tầng riêng, mở rộng bằng plugin và chia sẻ lại tri thức qua L2SC.
+- 🎨 Build workflow Data / ML / AI bằng kéo-thả — không cần code
+- 🤖 17 LLM providers (OpenAI, Anthropic, Gemini, Groq, Ollama local…)
+- 📊 96 plugins ETL, ML, RAG, Agent, Visualization, Integration
+- ⚡ Self-host on-prem, multi-user RBAC 4-level
+- 🌐 Cluster mode multi-node LAN (mDNS auto-discovery)
 
-## Giá trị kinh doanh
+**Đối tượng**: SME, startup, lab nghiên cứu — thay thế bộ Databricks + n8n + Zapier.
 
-- **Giảm chi phí vận hành dài hạn**: doanh nghiệp có thể tự host, chủ động tài nguyên và tránh phụ thuộc vào pricing theo lượt chạy.
-- **Bảo vệ dữ liệu nội bộ**: workflow chạy trên hạ tầng của chính doanh nghiệp, phù hợp với dữ liệu khách hàng, tài chính, sản xuất hoặc dữ liệu nhạy cảm.
-- **Tăng tốc triển khai AI/Data use case**: đội ngũ có thể dựng nhanh pipeline ETL, phân tích dữ liệu, huấn luyện model, RAG hoặc automation nội bộ.
-- **Tái sử dụng tri thức**: workflow tốt có thể được publish lên L2SC để team khác import và dùng lại, giảm lặp lại công việc.
-- **Phù hợp thị trường Việt Nam**: định hướng giao diện, tài liệu và cộng đồng bằng tiếng Việt, dễ tiếp cận hơn cho sinh viên, startup và doanh nghiệp trong nước.
+→ **Docker image**: [`baphongpine/l2s`](https://hub.docker.com/r/baphongpine/l2s) (multi-arch amd64/arm64).
 
-## L2S phù hợp với ai?
+---
 
-- Doanh nghiệp vừa và nhỏ muốn tự động hóa quy trình dữ liệu mà không muốn phụ thuộc hoàn toàn vào SaaS
-- Team Data/AI cần dựng nhanh pipeline ETL, ML, RAG hoặc báo cáo nội bộ
-- Startup muốn có nền tảng thử nghiệm workflow nhanh, chi phí thấp
-- Trường học, sinh viên và cộng đồng kỹ thuật muốn học và chia sẻ workflow thực tế
-- Freelancer/consultant cần đóng gói giải pháp automation cho khách hàng
+## 🚀 Cách cài L2S (chạy local)
 
-## L2S có thể làm gì?
+Hướng dẫn đầy đủ tại **[Docker Hub overview](https://hub.docker.com/r/baphongpine/l2s)**. Tóm tắt 3 bước:
 
-- Kéo-thả workflow xử lý dữ liệu, ETL và automation
-- Kết nối nhiều nguồn dữ liệu: file, database, API, object storage
-- Làm sạch, biến đổi, join, filter, aggregate và xuất dữ liệu
-- Xây dựng pipeline AI/ML, dự đoán, đánh giá model và phân tích kết quả
-- Tạo workflow RAG, chatbot, agent hoặc xử lý tài liệu
-- Chạy workflow theo lịch, theo trigger hoặc theo yêu cầu
-- Tự host trên máy cá nhân, server nội bộ hoặc cụm máy trong LAN
-- Chia sẻ workflow lên L2SC để cộng đồng có thể khám phá và tái sử dụng
+### Bước 1 — Tạo file `docker-compose.yml`
 
-## Vai trò của L2SC
+Tạo thư mục mới, file `docker-compose.yml` với nội dung:
 
-L2SC không thay thế L2S. L2SC là nơi kết nối cộng đồng xung quanh L2S.
+```yaml
+services:
+  l2s:
+    image: baphongpine/l2s:latest
+    container_name: l2s-platform
+    restart: unless-stopped
+    ports:
+      - "9996:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/l2s_platform
+      - REDIS_URL=redis://redis:6379/0
+      - L2S_SECRET_KEY=${L2S_SECRET_KEY}
+      - L2S_MINIO_ENDPOINT=minio:9000
+      - L2S_MINIO_ACCESS_KEY=${L2S_MINIO_ACCESS_KEY}
+      - L2S_MINIO_SECRET_KEY=${L2S_MINIO_SECRET_KEY}
+      - L2S_CLUSTER_TOKEN=${L2S_CLUSTER_TOKEN}
+      # Mặc định kết nối tới L2SC community
+      - L2SC_URL=https://l2s.io.vn
+      - L2SC_WEB_URL=https://l2s.io.vn
+      - L2SC_CONTRIBUTOR_API_KEY=${L2SC_CONTRIBUTOR_API_KEY:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+      minio: { condition: service_healthy }
+    volumes:
+      - plugin_deps:/plugin_deps
+      - vector_stores:/app/vector_stores
+      - agent_memory:/app/agent_memory
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true
+    mem_limit: 4g
 
-- Người dùng L2S có thể publish workflow lên L2SC
-- Người khác có thể browse, xem mô tả và import workflow về L2S riêng
-- Workflow public có thể được kiểm duyệt trước khi xuất hiện với cộng đồng
-- GitHub và video quảng cáo giúp người mới hiểu nhanh sản phẩm và tham gia đóng góp
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?required}
+      - POSTGRES_DB=l2s_platform
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 10
 
-Repository:
+  redis:
+    image: redis:7-alpine
+    volumes: [redis_data:/data]
 
-- L2S core: https://github.com/ngohongthong1832004/L2S
-- L2SC community: https://github.com/ngohongthong1832004/L2SC
+  minio:
+    image: minio/minio:latest
+    ports: ["9998:9001"]
+    environment:
+      - MINIO_ROOT_USER=${L2S_MINIO_ACCESS_KEY:-l2sadmin}
+      - MINIO_ROOT_PASSWORD=${L2S_MINIO_SECRET_KEY}
+    volumes: [minio_data:/data]
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
 
-## Truy cập L2SC
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  plugin_deps:
+  vector_stores:
+  agent_memory:
+```
 
-L2SC là cổng cộng đồng/marketing của hệ sinh thái L2S. Khi public ra ngoài, frontend và backend của L2SC đang dùng các port sau:
-
-- L2SC Frontend: http://localhost:9991
-- L2SC Backend API: http://localhost:991
-- L2SC API Docs: http://localhost:991/docs
-
-Nếu chạy bằng Docker Compose trong repository L2SC:
+### Bước 2 — Sinh `.env` random secrets
 
 ```bash
-docker compose up -d --build
+cat > .env <<EOF
+L2S_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+L2S_CLUSTER_TOKEN=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+L2S_MINIO_ACCESS_KEY=l2sadmin
+L2S_MINIO_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+EOF
+chmod 600 .env
 ```
 
-Sau khi chạy xong, mở `http://localhost:9991` để xem landing page, video quảng cáo, workflow community và modal thông báo bản trải nghiệm mở từ ngày **08/05/2026**.
-
-## Hướng dẫn cài đặt và sử dụng L2S
-
-L2S là nền tảng client tự host. Có 2 cách cài đặt — chọn 1 tuỳ nhu cầu.
-
-### Cách 1: Pull image từ Docker Hub (recommend cho user thường)
-
-Đây là cách nhanh nhất — không cần git clone, không build. Dùng image L2S all-in-one (backend + frontend gộp 1 image, multi-arch amd64/arm64).
+### Bước 3 — Start
 
 ```bash
-# 1. Tạo thư mục + tải file compose + sample env
-mkdir l2s && cd l2s
-curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/docker-compose.hub.yml
-curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/.env.example
-cp .env.example .env
-
-# 2. Sinh secrets random vào .env (chạy 5 dòng này)
-python3 -c "import secrets; print(f'L2S_SECRET_KEY={secrets.token_urlsafe(48)}')" >> .env
-python3 -c "import secrets; print(f'POSTGRES_PASSWORD={secrets.token_urlsafe(24)}')" >> .env
-python3 -c "import secrets; print(f'L2S_CLUSTER_TOKEN={secrets.token_hex(32)}')" >> .env
-python3 -c "import secrets; print(f'L2S_MINIO_SECRET_KEY={secrets.token_urlsafe(32)}')" >> .env
-echo 'L2S_MINIO_ACCESS_KEY=l2sadmin' >> .env
-
-# 3. Pull + start (4 container: l2s + postgres + redis + minio)
-docker compose -f docker-compose.hub.yml up -d
+docker compose up -d
 ```
 
-Sau ~30 giây mở `http://localhost:9996`:
-- Login mặc định: `admin` / `admin123` → **đổi password ngay** (Admin Panel → Users)
-- API docs: `http://localhost:9996/docs`
-- MinIO console: `http://localhost:9998` (l2sadmin / xem .env)
+Sau ~30 giây mở http://localhost:9996, login `admin / admin123` → **đổi password ngay** (Admin Panel → Users).
 
-Update version mới khi có:
+### Update version
 
 ```bash
-docker compose -f docker-compose.hub.yml pull
-docker compose -f docker-compose.hub.yml up -d
+docker compose pull
+docker compose up -d
 ```
 
-Pin version cụ thể: set `IMAGE_TAG=1.0.0-beta` trong `.env` (default `latest`).
+---
 
-Image links:
-- https://hub.docker.com/r/baphongpine/l2s
+## 📤 Cách push (publish) workflow lên L2SC community
 
-### Cách 2: Build từ source (cho developer / contributor)
+Sau khi tạo workflow ưng ý trên L2S local của bạn, share lên L2SC để mọi người dùng:
 
-Phù hợp khi bạn muốn sửa code, debug hoặc đóng góp PR.
+### Bước 1 — Đăng ký contributor tại L2SC
+
+1. Mở https://l2s.io.vn/register
+2. Điền username + email + password
+3. Sau khi đăng ký, vào **Dashboard** → copy **API Key** (chuỗi dài bắt đầu bằng `l2sc_`)
+
+### Bước 2 — Cấu hình L2S local kết nối với contributor account
+
+Mở `.env` của L2S local (cùng thư mục `docker-compose.yml`), thêm dòng:
+
+```
+L2SC_CONTRIBUTOR_API_KEY=l2sc_xxx_paste_api_key_của_bạn
+```
+
+Restart L2S để áp dụng:
 
 ```bash
-git clone https://github.com/ngohongthong1832004/L2S.git
-cd L2S
+docker compose up -d
 ```
 
-Trên Linux/macOS:
+### Bước 3 — Publish workflow từ UI L2S
+
+1. Mở workflow muốn share, click nút **Share** (góc phải trên)
+2. Chọn tab **Community** (bên cạnh tab Users)
+3. Điền:
+   - **Tiêu đề công khai**: tên dễ hiểu (vd "Sentiment analysis Tiếng Việt với LLM")
+   - **Mô tả**: workflow dùng để làm gì, input/output, dataset mẫu
+   - **Category**: ETL / ML / Analytics / Notification / Visualization / Integration / Other
+   - **Tags**: keyword cho dễ search (vd `nlp`, `vietnamese`, `llm`, `sentiment`)
+   - **Version**: `1.0.0` (lần sau update bump version)
+4. Click **Publish**
+
+### Bước 4 — Chờ admin duyệt
+
+Workflow sẽ ở trạng thái **pending review**. Admin L2SC kiểm tra:
+- Workflow chạy được không (test trên instance demo)
+- Title/description không spam
+- Không chứa credential leak
+
+Khi duyệt xong (thường <24h):
+- Workflow xuất hiện ở **Browse** tại https://l2s.io.vn/browse
+- Mọi người có thể **Import** về L2S local của họ để dùng
+- Bạn nhận thông báo qua email + thấy ⭐ stars + lượt import trong **Dashboard**
+
+### Tips publish workflow chất lượng
+
+- ✅ Đặt title cụ thể, kèm domain (vd "PostgreSQL → BI Dashboard" thay vì "Workflow 1")
+- ✅ Mô tả nêu rõ **input bắt buộc** (file CSV với cột nào, API key nào cần)
+- ✅ Bỏ credentials trước khi share (LLM key, DB password)
+- ✅ Tag đầy đủ để search ra (3-5 tag)
+- ❌ Đừng publish workflow chưa test
+- ❌ Đừng share workflow nội bộ chứa data nhạy cảm
+
+---
+
+## 💬 Khác
+
+### Tham gia Forum
+
+[https://l2s.io.vn/forum](https://l2s.io.vn/forum) — Q&A, Tutorial, Showcase, Announcement.
+
+### Đọc Docs plugin
+
+[https://l2s.io.vn/docs](https://l2s.io.vn/docs) — chi tiết 96 plugins L2S, có example use case.
+
+### Source code
+
+- **L2SC** (repo này, public): https://github.com/ngohongthong1832004/L2SC
+- **L2S** (gating 183⭐ trên L2SC): https://github.com/ngohongthong1832004/L2S
+- **L2S Docker image** (luôn miễn phí): https://hub.docker.com/r/baphongpine/l2s
+
+→ Star repo L2SC nếu thấy hữu ích để giúp đẩy nhanh ngày L2S source open hoàn toàn.
+
+### Contribute vào L2SC
+
+Bug / feature request / PR cho community space:
 
 ```bash
-./start.sh
+git clone https://github.com/ngohongthong1832004/L2SC.git
+cd L2SC
+docker compose up -d   # backend + frontend dev server
 ```
 
-Trên Windows PowerShell:
+Xem [QUICKSTART.md](./QUICKSTART.md) cho dev contributor (chi tiết deploy + tunnel + seed data).
 
-```powershell
-.\start.ps1
-```
+---
 
-Script sẽ tự sinh `.env` với secrets random + start docker compose.
+## License
 
-Sau khi chạy xong, mở trình duyệt tại:
-
-- L2S UI: http://localhost:9996
-- Backend API: http://localhost:9995
-- API Docs: http://localhost:9995/docs
-- MinIO Console: http://localhost:9998
-
-Tài khoản mặc định cho môi trường demo:
-
-- Admin: `admin` / `admin123`
-- User: `user` / `user123`
-
-> ⚠ **Đổi password admin ngay sau lần login đầu tiên** — vào Admin Panel → Users → Edit.
-
-### Yêu cầu hệ thống
-
-- Docker + Docker Compose
-- 4 GB RAM (8 GB nếu dùng nhiều LLM/ML node)
-- 10 GB ổ cứng trống
-- Linux / macOS / Windows (qua WSL2)
-
-### Các lệnh thường dùng
-
-```bash
-./start.sh logs       # theo dõi log
-./start.sh status     # trạng thái services
-./start.sh down       # dừng L2S (giữ data)
-./start.sh reset      # xoá toàn bộ data (cẩn thận)
-```
-
-## Chạy L2S theo chế độ cluster (multi-node LAN)
-
-Khi cần chia tải cho nhiều máy trong cùng mạng LAN, dùng mô hình coordinator/worker. mDNS auto-discover hoặc set thủ công URL.
-
-Máy chính (coordinator):
-
-```bash
-./start.sh cluster
-```
-
-Output sẽ in `LAN IP` + `L2S_CLUSTER_TOKEN` để copy sang worker.
-
-Máy phụ (worker):
-
-```bash
-L2S_COORDINATOR_URL=http://<IP-may-chinh>:9995 \
-L2S_CLUSTER_TOKEN=<token-tu-may-chinh> \
-./start.sh worker
-```
-
-Trên Windows:
-
-```powershell
-.\start.ps1 cluster
-```
-
-## Trước khi expose ra Internet công cộng
-
-L2S mặc định cấu hình cho dev/LAN. Trước khi public lên Internet:
-
-1. **Đổi mọi password mặc định** — admin user, Postgres, MinIO
-2. **Set CORS whitelist**: trong `.env` set `L2S_CORS_ORIGINS=https://yourdomain.com` (không để `*`)
-3. **HTTPS bắt buộc**: thêm reverse proxy (nginx/caddy/traefik) trước backend
-4. **Firewall**: chỉ expose port 9996 ra Internet, đóng 9994 (postgres), 9993 (redis), 9997 (minio API)
-5. **Backup định kỳ**:
-   ```bash
-   docker exec l2s-platform-postgres pg_dump -U postgres l2s_platform | gzip > backup-$(date +%F).sql.gz
-   ```
-6. **Rate limit**: đã bật mặc định (10 login/phút, 120 generated API/phút). Tighten qua env nếu cần.
-
-Đầy đủ checklist xem section **Production deployment** trong README của L2S.
-
-## Quy trình sử dụng đề xuất
-
-1. Chạy L2S trên máy cá nhân hoặc server nội bộ.
-2. Tạo workflow bằng cách kéo-thả node trong editor.
-3. Kiểm thử workflow với dữ liệu thật hoặc dữ liệu mẫu.
-4. Lưu workflow để team dùng lại.
-5. Khi workflow đủ hữu ích, publish lên L2SC để chia sẻ với cộng đồng.
-6. Browse L2SC để tìm workflow có sẵn và import về L2S khi cần.
-
-## Video giới thiệu
-
-Landing page của L2SC có section dành cho video quảng cáo sản phẩm. Khi có video chính thức, có thể gắn link YouTube embed hoặc video host trên GitHub Releases/CDN để người xem hiểu nhanh giá trị của L2S và cách L2SC kết nối cộng đồng.
-
-## Tầm nhìn
-
-L2S hướng đến một nền tảng Data & AI workflow mã nguồn mở, dễ dùng, có thể tự host và phù hợp với nhu cầu doanh nghiệp Việt Nam. L2SC là bước tiếp theo để biến workflow thành tài sản cộng đồng: dùng được, chia sẻ được và phát triển cùng nhau.
+MIT

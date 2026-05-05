@@ -79,18 +79,13 @@ printf "\n${C_GREEN}✓ Hoàn tất${C_OFF}\n\n"
 
 if [ "$DRYRUN" != "dryrun" ]; then
     cat <<EOF
-End-user pull về chạy:
+End-user pull về chạy theo guide ở Docker Hub overview:
 
-  curl -O https://raw.githubusercontent.com/<your-repo>/L2SC/main/docker-compose.hub.yml
+  → https://hub.docker.com/r/${IMAGE_PREFIX}/l2sc
 
-  cat > .env <<ENV
-  L2SC_POSTGRES_PASSWORD=\$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
-  L2SC_ADMIN_API_KEY=l2sc_\$(python3 -c "import secrets; print(secrets.token_urlsafe(20))")
-  ENV
+⚠ L2SC chủ yếu dùng public instance tại https://l2s.io.vn — hầu hết user
+KHÔNG cần self-host. Self-host chỉ khi cần private community nội bộ.
 
-  docker compose -f docker-compose.hub.yml up -d
-  # Mở http://localhost:9991 → login admin với api_key trong .env
-
-Image: https://hub.docker.com/r/${IMAGE_PREFIX}/l2sc
+Tóm tắt self-host: copy docker-compose.yml + tạo .env với 2 secret + up -d
 EOF
 fi

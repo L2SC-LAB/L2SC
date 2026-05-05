@@ -800,22 +800,25 @@ export default function Landing() {
 // Install L2S section — hướng dẫn cài đặt cho user mới
 // ============================================================
 
-const QUICK_START_HUB = `mkdir l2s && cd l2s
+const QUICK_START_HUB = `# Hướng dẫn đầy đủ: https://hub.docker.com/r/baphongpine/l2s
+# Tóm tắt 3 bước:
 
-# 1. Tải compose + sample env (sửa link sau khi push GitHub)
-curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/docker-compose.hub.yml
-curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/.env.example
-cp .env.example .env
+# 1. Tạo thư mục + file docker-compose.yml (copy từ Docker Hub overview)
+mkdir l2s && cd l2s
+# (tạo docker-compose.yml ở đây với content từ Docker Hub)
 
-# 2. Sinh secrets random vào .env (chạy 5 dòng này)
-python3 -c "import secrets; print(f'L2S_SECRET_KEY={secrets.token_urlsafe(48)}')" >> .env
-python3 -c "import secrets; print(f'POSTGRES_PASSWORD={secrets.token_urlsafe(24)}')" >> .env
-python3 -c "import secrets; print(f'L2S_CLUSTER_TOKEN={secrets.token_hex(32)}')" >> .env
-python3 -c "import secrets; print(f'L2S_MINIO_SECRET_KEY={secrets.token_urlsafe(32)}')" >> .env
-echo 'L2S_MINIO_ACCESS_KEY=l2sadmin' >> .env
+# 2. Sinh .env với 5 secret random:
+cat > .env <<EOF
+L2S_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
+L2S_CLUSTER_TOKEN=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+L2S_MINIO_ACCESS_KEY=l2sadmin
+L2S_MINIO_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+EOF
+chmod 600 .env
 
-# 3. Pull + start (4 container: l2s + postgres + redis + minio)
-docker compose -f docker-compose.hub.yml up -d
+# 3. Pull + start
+docker compose up -d
 
 # 4. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
 
