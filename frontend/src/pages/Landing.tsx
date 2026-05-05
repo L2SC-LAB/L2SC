@@ -6,6 +6,7 @@ import {
   ChevronRight, BarChart2, Cpu, Boxes, Star,
   Brain, Database, GitBranch, FlaskConical, Bot, Layers,
   Network, Code2, Heart, Github, X, Minus, ExternalLink, Video,
+  Terminal, Copy, Package, Check,
 } from 'lucide-react'
 import { api, Stats } from '../api/client'
 import { useAuthStore } from '../store/authStore'
@@ -43,6 +44,7 @@ export default function Landing() {
             <a href="#power"    className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Sức mạnh</a>
             <a href="#compare"  className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">So sánh</a>
             <a href="#how"      className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Cách dùng</a>
+            <a href="#install"  className="px-3 py-1.5 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 rounded-lg transition font-medium">Cài đặt</a>
             <a href="#promo"    className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Video</a>
             <Link to="/browse"  className="px-3 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition">Browse</Link>
           </nav>
@@ -93,6 +95,9 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
+            <a href="#install" className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-emerald-500/30">
+              <Terminal size={18} /> Cài đặt L2S
+            </a>
             <Link to="/browse"   className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-teal-500/30">
               <Globe size={18} /> Browse Workflows
             </Link>
@@ -491,6 +496,9 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ─── INSTALL L2S ─── */}
+      <InstallL2SSection />
+
       {/* ─── MADE IN VIETNAM ─── */}
       <section className="py-24 border-t border-slate-800/50 relative overflow-hidden">
         {/* background */}
@@ -785,5 +793,187 @@ export default function Landing() {
       </footer>
 
     </div>
+  )
+}
+
+// ============================================================
+// Install L2S section — hướng dẫn cài đặt cho user mới
+// ============================================================
+
+const QUICK_START_HUB = `mkdir l2s && cd l2s
+
+# 1. Tải compose + sample env (sửa link sau khi push GitHub)
+curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/docker-compose.hub.yml
+curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/.env.example
+cp .env.example .env
+
+# 2. Sinh secrets random vào .env (chạy 5 dòng này)
+python3 -c "import secrets; print(f'L2S_SECRET_KEY={secrets.token_urlsafe(48)}')" >> .env
+python3 -c "import secrets; print(f'POSTGRES_PASSWORD={secrets.token_urlsafe(24)}')" >> .env
+python3 -c "import secrets; print(f'L2S_CLUSTER_TOKEN={secrets.token_hex(32)}')" >> .env
+python3 -c "import secrets; print(f'L2S_MINIO_SECRET_KEY={secrets.token_urlsafe(32)}')" >> .env
+echo 'L2S_MINIO_ACCESS_KEY=l2sadmin' >> .env
+
+# 3. Pull + start (4 container: l2s + postgres + redis + minio)
+docker compose -f docker-compose.hub.yml up -d
+
+# 4. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
+
+const QUICK_START_SOURCE = `git clone https://github.com/ngohongthong1832004/L2S.git
+cd L2S
+
+# Linux/macOS
+./start.sh
+
+# Windows PowerShell
+.\\start.ps1
+
+# Mở http://localhost:9996 → admin/admin123`
+
+function InstallL2SSection() {
+  const [tab, setTab] = useState<'hub' | 'source'>('hub')
+  const [copied, setCopied] = useState(false)
+
+  const code = tab === 'hub' ? QUICK_START_HUB : QUICK_START_SOURCE
+
+  const doCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  return (
+    <section id="install" className="py-24 border-t border-slate-800/50 bg-gradient-to-b from-slate-900/40 to-transparent">
+      <div className="container mx-auto px-6 max-w-5xl">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-300 text-xs font-medium mb-4">
+            <Terminal size={12} /> Cài đặt L2S
+          </div>
+          <h2 className="text-4xl font-bold text-white">Bắt đầu trong 30 giây</h2>
+          <p className="text-slate-400 mt-3 max-w-2xl mx-auto">
+            L2S chạy trên máy local của bạn — toàn quyền dữ liệu, không upload SaaS bên ngoài.
+            Chọn 1 trong 2 cách dưới.
+          </p>
+        </div>
+
+        {/* Tab toggle */}
+        <div className="flex justify-center mb-6">
+          <div className="inline-flex items-center gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-lg">
+            <button
+              onClick={() => setTab('hub')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${
+                tab === 'hub'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Package size={14} />
+              Pull image (recommend)
+            </button>
+            <button
+              onClick={() => setTab('source')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${
+                tab === 'source'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Github size={14} />
+              From source (cho dev)
+            </button>
+          </div>
+        </div>
+
+        {/* Code block */}
+        <div className="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+          <div className="flex items-center justify-between px-4 py-2 bg-slate-900/80 border-b border-slate-800">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <Terminal size={13} />
+              <span className="font-mono">terminal</span>
+            </div>
+            <button
+              onClick={doCopy}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs rounded transition"
+            >
+              {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          <pre className="p-5 text-xs text-slate-200 font-mono overflow-x-auto leading-relaxed">
+            <code>{code}</code>
+          </pre>
+        </div>
+
+        {/* Pre-requisites + Help */}
+        <div className="grid md:grid-cols-3 gap-4 mt-8">
+          <div className="p-4 bg-slate-800/40 border border-slate-700 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-300 text-sm font-medium mb-2">
+              <CheckCircle2 size={14} />
+              Yêu cầu hệ thống
+            </div>
+            <ul className="text-xs text-slate-400 space-y-1">
+              <li>• Docker + Docker Compose</li>
+              <li>• 4 GB RAM (8 GB nếu dùng LLM/ML)</li>
+              <li>• 10 GB disk trống</li>
+              <li>• Linux / macOS / Windows (WSL2)</li>
+            </ul>
+          </div>
+          <div className="p-4 bg-slate-800/40 border border-slate-700 rounded-lg">
+            <div className="flex items-center gap-2 text-amber-300 text-sm font-medium mb-2">
+              <Shield size={14} />
+              Trước khi public
+            </div>
+            <ul className="text-xs text-slate-400 space-y-1">
+              <li>• Đổi password admin ngay</li>
+              <li>• Set <code className="text-amber-300">L2S_CORS_ORIGINS</code> domain thật</li>
+              <li>• Reverse proxy + HTTPS</li>
+              <li>• Xem <code className="text-amber-300">README.md</code> phần checklist</li>
+            </ul>
+          </div>
+          <div className="p-4 bg-slate-800/40 border border-slate-700 rounded-lg">
+            <div className="flex items-center gap-2 text-cyan-300 text-sm font-medium mb-2">
+              <BookOpen size={14} />
+              Học tiếp
+            </div>
+            <ul className="text-xs text-slate-400 space-y-1">
+              <li>• <Link to="/docs" className="text-cyan-300 hover:underline">Docs nodes</Link> — 96 plugin</li>
+              <li>• <Link to="/browse" className="text-cyan-300 hover:underline">Browse workflows</Link> mẫu</li>
+              <li>• <Link to="/forum" className="text-cyan-300 hover:underline">Forum</Link> hỏi đáp</li>
+              <li>
+                • <a href={L2S_REPO_URL} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:underline inline-flex items-center gap-1">
+                    GitHub <ExternalLink size={10} />
+                  </a> — issue / PR
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-10">
+          <a
+            href="https://hub.docker.com/r/baphongpine/l2s"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg font-medium transition"
+          >
+            <Package size={16} />
+            Docker Hub
+            <ExternalLink size={13} />
+          </a>
+          <Link
+            to="/docs"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-lg font-semibold transition shadow-lg shadow-emerald-500/20"
+          >
+            <BookOpen size={16} />
+            Xem docs nodes
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
+    </section>
   )
 }

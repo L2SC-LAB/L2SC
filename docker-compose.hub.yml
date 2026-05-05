@@ -1,0 +1,72 @@
+# L2SC — production-style compose dùng image pre-built từ Docker Hub.
+# 1 image L2SC all-in-one (backend FastAPI + frontend React static cùng container).
+# Backend serve UI tại / + API tại /api/* trên cùng port.
+#
+# Quick start:
+#   1. Tải file này + .env.example:
+#      curl -O https://raw.githubusercontent.com/<your-repo>/L2SC/main/docker-compose.hub.yml
+#      curl -O https://raw.githubusercontent.com/<your-repo>/L2SC/main/.env.example
+#      cp .env.example .env
+#   2. Sinh secrets vào .env:
+#      python3 -c "import secrets; print(f'L2SC_POSTGRES_PASSWORD={secrets.token_urlsafe(24)}')" >> .env
+#      python3 -c "import secrets; print(f'L2SC_ADMIN_API_KEY=l2sc_{secrets.token_urlsafe(20)}')" >> .env
+#   3. docker compose -f docker-compose.hub.yml up -d
+#   4. Mở http://localhost:9991 → admin login với api_key trên
+#
+# Update version mới:
+#   docker compose -f docker-compose.hub.yml pull
+#   docker compose -f docker-compose.hub.yml up -d
+#
+# Pin version: set IMAGE_TAG=1.0.0-beta trong .env (default `latest`).
+
+services:
+  l2sc:
+    image: ${IMAGE_PREFIX:-baphongpine}/l2sc:${IMAGE_TAG:-latest}
+    container_name: l2sc-platform
+    restart: unless-stopped
+    ports:
+      # 1 port duy nhất — serve cả UI + API
+      - "${L2SC_PORT:-9991}:991"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${L2SC_POSTGRES_PASSWORD}@postgres:5432/l2sc
+      - L2SC_ADMIN_API_KEY=${L2SC_ADMIN_API_KEY:-}
+      - L2SC_CORS_ORIGINS=${L2SC_CORS_ORIGINS:-*}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: ${L2SC_MEM:-1g}
+    cpus: ${L2SC_CPUS:-1.0}
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: l2sc-platform-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${L2SC_POSTGRES_PASSWORD:?L2SC_POSTGRES_PASSWORD bắt buộc trong .env}
+      - POSTGRES_DB=l2sc
+    volumes:
+      - l2sc_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+    cpus: 0.5
+
+  # Cloudflare Tunnel — opt-in để expose ra Internet (domain l2s.io.vn).
+  # Bật: COMPOSE_PROFILES=tunnel docker compose -f docker-compose.hub.yml up -d
+  cloudflared:
+    profiles: ["tunnel"]
+    image: cloudflare/cloudflared:latest
+    container_name: l2sc-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - l2sc
+    mem_limit: 256m
+    cpus: 0.25
+
+volumes:
+  l2sc_postgres_data:

@@ -71,11 +71,54 @@ Nếu chạy bằng Docker Compose trong repository L2SC:
 docker compose up -d --build
 ```
 
-Sau khi chạy xong, mở `http://localhost:9991` để xem landing page, video quảng cáo, workflow community và modal thông báo bản trải nghiệm mở từ ngày **05/05/2026**.
+Sau khi chạy xong, mở `http://localhost:9991` để xem landing page, video quảng cáo, workflow community và modal thông báo bản trải nghiệm mở từ ngày **08/05/2026**.
 
-## Hướng dẫn chạy L2S
+## Hướng dẫn cài đặt và sử dụng L2S
 
-Cách nhanh nhất là dùng Docker. Clone repository L2S rồi chạy script khởi động theo hệ điều hành.
+L2S là nền tảng client tự host. Có 2 cách cài đặt — chọn 1 tuỳ nhu cầu.
+
+### Cách 1: Pull image từ Docker Hub (recommend cho user thường)
+
+Đây là cách nhanh nhất — không cần git clone, không build. Dùng image L2S all-in-one (backend + frontend gộp 1 image, multi-arch amd64/arm64).
+
+```bash
+# 1. Tạo thư mục + tải file compose + sample env
+mkdir l2s && cd l2s
+curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/docker-compose.hub.yml
+curl -O https://raw.githubusercontent.com/ngohongthong1832004/L2S/main/.env.example
+cp .env.example .env
+
+# 2. Sinh secrets random vào .env (chạy 5 dòng này)
+python3 -c "import secrets; print(f'L2S_SECRET_KEY={secrets.token_urlsafe(48)}')" >> .env
+python3 -c "import secrets; print(f'POSTGRES_PASSWORD={secrets.token_urlsafe(24)}')" >> .env
+python3 -c "import secrets; print(f'L2S_CLUSTER_TOKEN={secrets.token_hex(32)}')" >> .env
+python3 -c "import secrets; print(f'L2S_MINIO_SECRET_KEY={secrets.token_urlsafe(32)}')" >> .env
+echo 'L2S_MINIO_ACCESS_KEY=l2sadmin' >> .env
+
+# 3. Pull + start (4 container: l2s + postgres + redis + minio)
+docker compose -f docker-compose.hub.yml up -d
+```
+
+Sau ~30 giây mở `http://localhost:9996`:
+- Login mặc định: `admin` / `admin123` → **đổi password ngay** (Admin Panel → Users)
+- API docs: `http://localhost:9996/docs`
+- MinIO console: `http://localhost:9998` (l2sadmin / xem .env)
+
+Update version mới khi có:
+
+```bash
+docker compose -f docker-compose.hub.yml pull
+docker compose -f docker-compose.hub.yml up -d
+```
+
+Pin version cụ thể: set `IMAGE_TAG=1.0.0-beta` trong `.env` (default `latest`).
+
+Image links:
+- https://hub.docker.com/r/baphongpine/l2s
+
+### Cách 2: Build từ source (cho developer / contributor)
+
+Phù hợp khi bạn muốn sửa code, debug hoặc đóng góp PR.
 
 ```bash
 git clone https://github.com/ngohongthong1832004/L2S.git
@@ -94,40 +137,79 @@ Trên Windows PowerShell:
 .\start.ps1
 ```
 
+Script sẽ tự sinh `.env` với secrets random + start docker compose.
+
 Sau khi chạy xong, mở trình duyệt tại:
 
-- L2S UI: http://localhost:5173
-- Backend API: http://localhost:8000
-- MinIO Console: http://localhost:9001
+- L2S UI: http://localhost:9996
+- Backend API: http://localhost:9995
+- API Docs: http://localhost:9995/docs
+- MinIO Console: http://localhost:9998
 
-Tài khoản mặc định thường dùng cho môi trường demo:
+Tài khoản mặc định cho môi trường demo:
 
 - Admin: `admin` / `admin123`
 - User: `user` / `user123`
 
-## Chạy L2S theo chế độ cluster
+> ⚠ **Đổi password admin ngay sau lần login đầu tiên** — vào Admin Panel → Users → Edit.
 
-Khi cần chia tải cho nhiều máy trong cùng mạng LAN, có thể chạy L2S theo mô hình coordinator/worker.
+### Yêu cầu hệ thống
 
-Máy chính:
+- Docker + Docker Compose
+- 4 GB RAM (8 GB nếu dùng nhiều LLM/ML node)
+- 10 GB ổ cứng trống
+- Linux / macOS / Windows (qua WSL2)
+
+### Các lệnh thường dùng
+
+```bash
+./start.sh logs       # theo dõi log
+./start.sh status     # trạng thái services
+./start.sh down       # dừng L2S (giữ data)
+./start.sh reset      # xoá toàn bộ data (cẩn thận)
+```
+
+## Chạy L2S theo chế độ cluster (multi-node LAN)
+
+Khi cần chia tải cho nhiều máy trong cùng mạng LAN, dùng mô hình coordinator/worker. mDNS auto-discover hoặc set thủ công URL.
+
+Máy chính (coordinator):
 
 ```bash
 ./start.sh cluster
 ```
 
-Máy phụ:
+Output sẽ in `LAN IP` + `L2S_CLUSTER_TOKEN` để copy sang worker.
+
+Máy phụ (worker):
 
 ```bash
-L2S_COORDINATOR_URL=http://<IP-may-chinh>:8000 \
+L2S_COORDINATOR_URL=http://<IP-may-chinh>:9995 \
 L2S_CLUSTER_TOKEN=<token-tu-may-chinh> \
 ./start.sh worker
 ```
 
-Trên Windows, có thể dùng script PowerShell tương ứng:
+Trên Windows:
 
 ```powershell
 .\start.ps1 cluster
 ```
+
+## Trước khi expose ra Internet công cộng
+
+L2S mặc định cấu hình cho dev/LAN. Trước khi public lên Internet:
+
+1. **Đổi mọi password mặc định** — admin user, Postgres, MinIO
+2. **Set CORS whitelist**: trong `.env` set `L2S_CORS_ORIGINS=https://yourdomain.com` (không để `*`)
+3. **HTTPS bắt buộc**: thêm reverse proxy (nginx/caddy/traefik) trước backend
+4. **Firewall**: chỉ expose port 9996 ra Internet, đóng 9994 (postgres), 9993 (redis), 9997 (minio API)
+5. **Backup định kỳ**:
+   ```bash
+   docker exec l2s-platform-postgres pg_dump -U postgres l2s_platform | gzip > backup-$(date +%F).sql.gz
+   ```
+6. **Rate limit**: đã bật mặc định (10 login/phút, 120 generated API/phút). Tighten qua env nếu cần.
+
+Đầy đủ checklist xem section **Production deployment** trong README của L2S.
 
 ## Quy trình sử dụng đề xuất
 

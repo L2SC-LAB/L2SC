@@ -51,14 +51,14 @@ function TrialAnnouncementModal() {
 
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-400/30 bg-cyan-500/10 text-cyan-200 text-xs font-medium mb-4">
             <CalendarDays size={13} />
-            Mở bản trải nghiệm từ 05/05/2026
+            Mở bản trải nghiệm từ 08/05/2026
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-3">
             L2SC sắp mở bản trải nghiệm
           </h2>
           <p className="text-slate-300 leading-relaxed mb-5">
-            Từ ngày <strong className="text-white">05/05/2026</strong>, người dùng có thể bắt đầu trải nghiệm
+            Từ ngày <strong className="text-white">08/05/2026</strong>, người dùng có thể bắt đầu trải nghiệm
             L2SC để khám phá workflow cộng đồng, xem demo sản phẩm và chuẩn bị kết nối với hệ sinh thái L2S.
           </p>
           <p className="text-sm text-slate-500 mb-6">

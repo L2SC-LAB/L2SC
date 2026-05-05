@@ -93,11 +93,61 @@ def health():
     return {"status": "healthy", "service": "l2sc"}
 
 
-@app.get("/")
-def root():
+@app.get("/api/info")
+def api_info():
+    """Metadata service info — replaces old / route which now serves SPA."""
     return {
         "service": "L2SC — L2S Communicate",
         "docs": "/docs",
         "workflows": "/api/workflows",
         "register": "/api/contribute/register",
     }
+
+
+# ============================================================
+# FRONTEND STATIC SERVING (all-in-one image)
+# ============================================================
+# Khi docker image gộp BE + FE: copy `frontend/dist` → /app/static.
+# Backend serve UI trực tiếp tại `/`, fallback `index.html` cho SPA routing.
+# Bypass nếu L2SC_STATIC_DIR không tồn tại (chạy backend riêng cho dev frontend Vite).
+from pathlib import Path as _Path
+from fastapi import HTTPException as _HTTPException, Request as _Request
+from fastapi.staticfiles import StaticFiles as _StaticFiles
+from fastapi.responses import FileResponse as _FileResponse
+
+_static_dir = _Path(os.getenv("L2SC_STATIC_DIR", "/app/static"))
+if _static_dir.is_dir() and (_static_dir / "index.html").exists():
+    _assets_dir = _static_dir / "assets"
+    if _assets_dir.is_dir():
+        app.mount("/assets", _StaticFiles(directory=str(_assets_dir)), name="assets")
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    @app.get("/favicon.png", include_in_schema=False)
+    @app.get("/robots.txt", include_in_schema=False)
+    @app.get("/vite.svg", include_in_schema=False)
+    async def _static_root_file(request: _Request):
+        f = _static_dir / request.url.path.lstrip("/")
+        if f.is_file():
+            return _FileResponse(f)
+        raise _HTTPException(status_code=404)
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def _spa_fallback(full_path: str):
+        # Đừng catch API path — nếu API không match thì FastAPI tự trả 404
+        if full_path.startswith("api/") or full_path.startswith("docs") or full_path == "openapi.json":
+            raise _HTTPException(status_code=404, detail=f"Not found: /{full_path}")
+        return _FileResponse(_static_dir / "index.html")
+
+    logger.info(f"[static] Serving frontend từ {_static_dir} — all-in-one mode")
+else:
+    # Dev mode: không có static dir → backend chỉ serve API.
+    # Add lại `/` JSON cho ai gọi root.
+    @app.get("/")
+    def _root_json():
+        return {
+            "service": "L2SC — L2S Communicate",
+            "mode": "api-only",
+            "docs": "/docs",
+            "workflows": "/api/workflows",
+        }
+    logger.info(f"[static] Không tìm thấy {_static_dir} — backend chỉ serve API (dev mode)")
