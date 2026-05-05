@@ -527,7 +527,7 @@ export default function Landing() {
                   <div>
                     <p className="text-amber-200 font-semibold text-sm mb-1">Cam kết Open Source</p>
                     <p className="text-slate-400 text-sm">
-                      Khi repository đạt <strong className="text-amber-300">1.803 sao GitHub</strong>,
+                      Khi repository đạt <strong className="text-amber-300">183 sao GitHub</strong>,
                       chúng tôi sẽ <strong className="text-white">public toàn bộ source code core</strong> của L2S
                       dưới giấy phép mã nguồn mở. Cộng đồng sẽ có thể fork, contribute và
                       cùng phát triển nền tảng này.
@@ -546,7 +546,7 @@ export default function Landing() {
                   <Github size={16} />
                   L2S Source
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-500/20 text-amber-300 text-xs rounded border border-amber-500/30">
-                    <Star size={11} /> 1k sao = OSS
+                    <Star size={11} /> 183 sao = OSS
                   </span>
                 </a>
 
@@ -586,7 +586,7 @@ export default function Landing() {
                 {
                   icon: <Shield size={18} className="text-amber-400" />,
                   title: 'Cam kết minh bạch',
-                  desc: '1.803 sao GitHub = public source code core. Không lock-in, không surprise pricing. Lời hứa trước cộng đồng.',
+                  desc: '183 sao GitHub = public source code core. Không lock-in, không surprise pricing. Lời hứa trước cộng đồng.',
                 },
                 {
                   icon: <BookOpen size={18} className="text-sky-400" />,

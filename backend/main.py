@@ -66,9 +66,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# CORS — production set L2SC_CORS_ORIGINS=https://l2s.io.vn,https://www.l2s.io.vn
+# Default "*" cho dev. Same-origin behind cloudflared (l2s.io.vn → frontend → /api → backend)
+# thì preflight không bắt buộc, nhưng giữ "*" cho bot/integration.
+_cors_env = os.getenv("L2SC_CORS_ORIGINS", "*").strip()
+_cors_origins = ["*"] if _cors_env == "*" else [o.strip() for o in _cors_env.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

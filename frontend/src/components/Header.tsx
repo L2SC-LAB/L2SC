@@ -20,7 +20,15 @@ export default function Header() {
             <Globe size={18} className="text-white" />
           </div>
           <div>
-            <span className="text-white font-bold text-base leading-none">L2SC</span>
+            <span className="text-white font-bold text-base leading-none flex items-center gap-1.5">
+              L2SC
+              <span
+                className="px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                title="Phiên bản beta"
+              >
+                Beta
+              </span>
+            </span>
             <span className="block text-xs text-slate-400 leading-none mt-0.5">L2S Communicate</span>
           </div>
         </Link>
