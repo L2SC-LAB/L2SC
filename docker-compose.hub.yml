@@ -1,17 +1,20 @@
-# L2SC — production-style compose dùng image pre-built từ Docker Hub.
-# 1 image L2SC all-in-one (backend FastAPI + frontend React static cùng container).
+# L2S — production-style compose dùng image pre-built từ Docker Hub.
+# 1 image L2S all-in-one (backend FastAPI + frontend React static cùng container).
 # Backend serve UI tại / + API tại /api/* trên cùng port.
 #
 # Quick start:
 #   1. Tải file này + .env.example:
-#      curl -O https://raw.githubusercontent.com/<your-repo>/L2SC/main/docker-compose.hub.yml
-#      curl -O https://raw.githubusercontent.com/<your-repo>/L2SC/main/.env.example
+#      curl -O https://raw.githubusercontent.com/<your-repo>/L2S/main/docker-compose.hub.yml
+#      curl -O https://raw.githubusercontent.com/<your-repo>/L2S/main/.env.example
 #      cp .env.example .env
-#   2. Sinh secrets vào .env:
-#      python3 -c "import secrets; print(f'L2SC_POSTGRES_PASSWORD={secrets.token_urlsafe(24)}')" >> .env
-#      python3 -c "import secrets; print(f'L2SC_ADMIN_API_KEY=l2sc_{secrets.token_urlsafe(20)}')" >> .env
+#   2. Sinh secrets vào .env (hoặc dùng start.sh từ source repo):
+#      python3 -c "import secrets; print(f'L2S_SECRET_KEY={secrets.token_urlsafe(48)}')" >> .env
+#      python3 -c "import secrets; print(f'POSTGRES_PASSWORD={secrets.token_urlsafe(24)}')" >> .env
+#      python3 -c "import secrets; print(f'L2S_CLUSTER_TOKEN={secrets.token_hex(32)}')" >> .env
+#      python3 -c "import secrets; print(f'L2S_MINIO_SECRET_KEY={secrets.token_urlsafe(32)}')" >> .env
+#      echo 'L2S_MINIO_ACCESS_KEY=l2sadmin' >> .env
 #   3. docker compose -f docker-compose.hub.yml up -d
-#   4. Mở http://localhost:9991 → admin login với api_key trên
+#   4. Mở http://localhost:9996 → login admin/admin123 → ĐỔI PASSWORD ngay
 #
 # Update version mới:
 #   docker compose -f docker-compose.hub.yml pull
@@ -20,53 +23,118 @@
 # Pin version: set IMAGE_TAG=1.0.0-beta trong .env (default `latest`).
 
 services:
-  l2sc:
-    image: ${IMAGE_PREFIX:-baphongpine}/l2sc:${IMAGE_TAG:-latest}
-    container_name: l2sc-platform
+  l2s:
+    image: ${IMAGE_PREFIX:-baphongpine}/l2s:${IMAGE_TAG:-latest}
+    container_name: l2s-platform
     restart: unless-stopped
     ports:
-      # 1 port duy nhất — serve cả UI + API
-      - "${L2SC_PORT:-9991}:991"
+      # 1 port duy nhất — serve cả UI và API
+      - "${L2S_PORT:-9996}:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:${L2SC_POSTGRES_PASSWORD}@postgres:5432/l2sc
-      - L2SC_ADMIN_API_KEY=${L2SC_ADMIN_API_KEY:-}
-      - L2SC_CORS_ORIGINS=${L2SC_CORS_ORIGINS:-*}
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/l2s_platform
+      - REDIS_URL=redis://redis:6379/0
+      - L2S_SECRET_KEY=${L2S_SECRET_KEY}
+      - L2S_ALLOW_WEAK_SECRET=${L2S_ALLOW_WEAK_SECRET:-}
+      # MinIO artifact store
+      - L2S_ARTIFACT_BACKEND=${L2S_ARTIFACT_BACKEND:-auto}
+      - L2S_MINIO_ENDPOINT=minio:9000
+      - L2S_MINIO_ACCESS_KEY=${L2S_MINIO_ACCESS_KEY}
+      - L2S_MINIO_SECRET_KEY=${L2S_MINIO_SECRET_KEY}
+      - L2S_MINIO_BUCKET=${L2S_MINIO_BUCKET:-l2s-artifacts}
+      # Cluster
+      - L2S_CLUSTER_ENABLED=${L2S_CLUSTER_ENABLED:-false}
+      - L2S_NODE_ROLE=${L2S_NODE_ROLE:-auto}
+      - L2S_CLUSTER_TOKEN=${L2S_CLUSTER_TOKEN}
+      - L2S_MDNS_ENABLED=${L2S_MDNS_ENABLED:-true}
+      # L2SC integration — mặc định trỏ về L2SC chính thức tại l2s.io.vn.
+      # User có thể browse + import workflow public ngay không cần config.
+      # Self-host L2SC riêng: override 2 URL dưới qua .env.
+      - L2SC_URL=${L2SC_URL:-https://l2s.io.vn}
+      - L2SC_WEB_URL=${L2SC_WEB_URL:-https://l2s.io.vn}
+      # Token contributor — đăng ký tại https://l2s.io.vn/register, paste vào đây
+      # để publish workflow của mình lên community. Để trống = chỉ browse được.
+      - L2SC_CONTRIBUTOR_API_KEY=${L2SC_CONTRIBUTOR_API_KEY:-}
+      # URL mà L2SC gọi ngược lại L2S node (chỉ cần khi expose L2S ra public).
+      - L2S_PUBLIC_URL=${L2S_PUBLIC_URL:-}
+      # Security
+      - L2S_CORS_ORIGINS=${L2S_CORS_ORIGINS:-*}
+      - L2S_RATE_LIMIT_ENABLED=${L2S_RATE_LIMIT_ENABLED:-true}
     depends_on:
       postgres:
         condition: service_healthy
-    mem_limit: ${L2SC_MEM:-1g}
-    cpus: ${L2SC_CPUS:-1.0}
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    volumes:
+      # Plugin lazy-installed deps + RAG vector store + agent memory
+      - plugin_deps:/plugin_deps
+      - vector_stores:/app/vector_stores
+      - agent_memory:/app/agent_memory
+      - workflow_docker_data:/app/workflow_docker_data
+      # Docker-in-Docker cho plugin _instance (postgres_instance, mongo_instance...)
+      - /var/run/docker.sock:/var/run/docker.sock
+    privileged: true
+    mem_limit: ${L2S_MEM:-4g}
+    cpus: ${L2S_CPUS:-2}
 
   postgres:
     image: postgres:15-alpine
-    container_name: l2sc-platform-postgres
+    container_name: l2s-platform-postgres
     restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${L2SC_POSTGRES_PASSWORD:?L2SC_POSTGRES_PASSWORD bắt buộc trong .env}
-      - POSTGRES_DB=l2sc
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD bắt buộc trong .env — chạy ./start.sh để tự sinh}
+      - POSTGRES_DB=l2s_platform
+    ports:
+      - "${POSTGRES_PORT:-9994}:5432"
     volumes:
-      - l2sc_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 10
+    mem_limit: 1g
+    cpus: 1.0
+
+  redis:
+    image: redis:7-alpine
+    container_name: l2s-platform-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-9993}:6379"
+    volumes:
+      - redis_data:/data
     mem_limit: 512m
     cpus: 0.5
 
-  # Cloudflare Tunnel — opt-in để expose ra Internet (domain l2s.io.vn).
-  # Bật: COMPOSE_PROFILES=tunnel docker compose -f docker-compose.hub.yml up -d
-  cloudflared:
-    profiles: ["tunnel"]
-    image: cloudflare/cloudflared:latest
-    container_name: l2sc-cloudflared
+  minio:
+    image: minio/minio:latest
+    container_name: l2s-platform-minio
     restart: unless-stopped
-    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      - l2sc
-    mem_limit: 256m
-    cpus: 0.25
+    ports:
+      - "${MINIO_API_PORT:-9997}:9000"
+      - "${MINIO_CONSOLE_PORT:-9998}:9001"
+    environment:
+      - MINIO_ROOT_USER=${L2S_MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${L2S_MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 1g
+    cpus: 1.0
 
 volumes:
-  l2sc_postgres_data:
+  postgres_data:
+  redis_data:
+  minio_data:
+  plugin_deps:
+  vector_stores:
+  agent_memory:
+  workflow_docker_data:
