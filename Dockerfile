@@ -11,6 +11,11 @@
 # =====================================================================
 FROM node:18-alpine AS frontend-builder
 
+# Build-time config — bake API URL vào bundle. Override khi build:
+#   docker build --build-arg VITE_L2SC_API_URL=https://my-l2sc-api.local ...
+ARG VITE_L2SC_API_URL=https://service.l2s.io.vn
+ENV VITE_L2SC_API_URL=$VITE_L2SC_API_URL
+
 WORKDIR /fe
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps

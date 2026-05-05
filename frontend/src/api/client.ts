@@ -1,6 +1,11 @@
 import axios from 'axios'
 
-const http = axios.create({ baseURL: '' })
+// Production: build với VITE_L2SC_API_URL=https://service.l2s.io.vn để frontend
+// (host ở l2s.io.vn) gọi qua subdomain API riêng — tách FE/BE rõ ràng.
+// Dev local: để trống → axios dùng relative URL, Vite proxy /api → backend.
+const API_BASE = import.meta.env.VITE_L2SC_API_URL || ''
+
+const http = axios.create({ baseURL: API_BASE })
 
 http.interceptors.request.use((config) => {
   const key = localStorage.getItem('l2sc_api_key')

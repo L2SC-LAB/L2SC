@@ -93,6 +93,30 @@ def health():
     return {"status": "healthy", "service": "l2sc"}
 
 
+@app.get("/api/health")
+def api_health():
+    """L2S clients ping endpoint này để kiểm tra connection — trả 'ok' để L2S
+    biết hub đang sống. Giữ shape `{ok, version, auto_approve}` để khớp với
+    parser bên L2S backend community.py."""
+    from sqlalchemy import select, func
+    from backend.db_models import PublicWorkflow
+
+    auto_approve = os.getenv("L2SC_AUTO_APPROVE", "false").lower() == "true"
+    try:
+        with SessionLocal() as db:
+            wf_count = db.scalar(select(func.count(PublicWorkflow.id))) or 0
+    except Exception:
+        wf_count = 0
+
+    return {
+        "ok": True,
+        "service": "l2sc",
+        "version": os.getenv("L2SC_VERSION", "1.0.0-beta"),
+        "auto_approve": auto_approve,
+        "workflows": wf_count,
+    }
+
+
 @app.get("/api/info")
 def api_info():
     """Metadata service info — replaces old / route which now serves SPA."""

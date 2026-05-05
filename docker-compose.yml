@@ -23,7 +23,9 @@ services:
     ports:
       - "9991:9991"
     environment:
-      - VITE_API_URL=
+      # Dev local: để trống → relative URL + Vite proxy /api → backend.
+      # Production tách domain: set VITE_L2SC_API_URL=https://service.l2s.io.vn.
+      - VITE_L2SC_API_URL=${VITE_L2SC_API_URL:-}
       - CHOKIDAR_USEPOLLING=true
     volumes:
       - ./frontend:/app

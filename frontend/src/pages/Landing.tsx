@@ -819,10 +819,11 @@ const DOCKER_COMPOSE_YML = `services:
       - L2S_MINIO_BUCKET=l2s-artifacts
       - L2S_CLUSTER_ENABLED=false
       - L2S_CLUSTER_TOKEN=\${L2S_CLUSTER_TOKEN}
-      # Mặc định kết nối tới L2SC community tại l2s.io.vn
-      - L2SC_URL=https://l2s.io.vn
+      # Mặc định kết nối tới L2SC community (service = API backend, web = UI cộng đồng)
+      - L2SC_URL=https://service.l2s.io.vn
       - L2SC_WEB_URL=https://l2s.io.vn
       - L2SC_CONTRIBUTOR_API_KEY=\${L2SC_CONTRIBUTOR_API_KEY:-}
+      - L2S_PUBLIC_URL=\${L2S_PUBLIC_URL:-}
       - L2S_CORS_ORIGINS=\${L2S_CORS_ORIGINS:-*}
       - L2S_RATE_LIMIT_ENABLED=\${L2S_RATE_LIMIT_ENABLED:-true}
     depends_on:

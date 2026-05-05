@@ -129,6 +129,24 @@ docker compose up -d
 
 ---
 
+## Custom build args — point frontend vào API khác
+
+Khi self-host private, frontend (UI cộng đồng) cần biết domain của backend để gọi cross-origin. Default đã bake `https://service.l2s.io.vn` vào image — nếu bạn dùng domain khác, rebuild với `--build-arg`:
+
+```bash
+docker build \
+  --build-arg VITE_L2SC_API_URL=https://my-l2sc-api.local \
+  -t l2sc:custom .
+```
+
+| Build-arg | Default | Vai trò |
+|-----------|---------|---------|
+| `VITE_L2SC_API_URL` | `https://service.l2s.io.vn` | Backend API URL frontend gọi (BẮT BUỘC khi tách FE/BE 2 domain) |
+
+Nếu chạy FE + BE cùng 1 domain (1 tunnel duy nhất): để `VITE_L2SC_API_URL=` trống → frontend dùng relative URL, không cần build-arg.
+
+---
+
 ## Cloudflare Tunnel (expose ra Internet)
 
 Public L2SC private qua domain riêng (vd `community.yourdomain.com`):
