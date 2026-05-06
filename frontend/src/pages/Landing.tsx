@@ -819,10 +819,10 @@ const DOCKER_COMPOSE_YML = `services:
       - L2S_MINIO_BUCKET=l2s-artifacts
       - L2S_CLUSTER_ENABLED=false
       - L2S_CLUSTER_TOKEN=\${L2S_CLUSTER_TOKEN}
-      # Mặc định kết nối tới L2SC community (service = API backend, web = UI cộng đồng)
+      # Auto-connect L2SC community: backend tự register node lên hub lúc startup
+      # bằng L2S_CLUSTER_TOKEN — KHÔNG cần đăng ký account/paste API key.
       - L2SC_URL=https://service.l2s.io.vn
       - L2SC_WEB_URL=https://l2s.io.vn
-      - L2SC_CONTRIBUTOR_API_KEY=\${L2SC_CONTRIBUTOR_API_KEY:-}
       - L2S_PUBLIC_URL=\${L2S_PUBLIC_URL:-}
       - L2S_CORS_ORIGINS=\${L2S_CORS_ORIGINS:-*}
       - L2S_RATE_LIMIT_ENABLED=\${L2S_RATE_LIMIT_ENABLED:-true}
@@ -895,6 +895,8 @@ const QUICK_START_HUB_UNIX = `# Linux / macOS — bash / zsh
 # Chạy trong cùng thư mục có docker-compose.yml ở trên
 
 # 1. Sinh .env với 5 secret random
+#    L2S_CLUSTER_TOKEN được dùng làm contributor identity — backend tự đăng ký
+#    lên L2SC community lúc startup, KHÔNG cần đăng ký account thủ công.
 cat > .env <<EOF
 L2S_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
 POSTGRES_PASSWORD=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
@@ -907,12 +909,16 @@ chmod 600 .env
 # 2. Pull image + start (lần đầu ~1.4GB)
 docker compose up -d
 
-# 3. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
+# 3. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay
+#    Browse / import / publish workflow lên community đều work ngay,
+#    không cần config gì thêm.`
 
 const QUICK_START_HUB_WIN = `# Windows — PowerShell (KHÔNG dùng CMD/Command Prompt)
 # Chạy trong cùng thư mục có docker-compose.yml ở trên
 
 # 1. Sinh secrets random rồi ghi .env
+#    L2S_CLUSTER_TOKEN được dùng làm contributor identity — backend tự đăng ký
+#    lên L2SC community lúc startup, KHÔNG cần đăng ký account thủ công.
 $secret  = python -c "import secrets; print(secrets.token_urlsafe(48))"
 $pgpass  = python -c "import secrets; print(secrets.token_urlsafe(24))"
 $cluster = python -c "import secrets; print(secrets.token_hex(32))"
@@ -929,18 +935,39 @@ L2S_MINIO_SECRET_KEY=$minio
 # 2. Pull image + start (lần đầu ~1.4GB)
 docker compose up -d
 
-# 3. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
+# 3. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay
+#    Browse / import / publish workflow lên community đều work ngay,
+#    không cần config gì thêm.`
 
-const QUICK_START_SOURCE = `git clone https://github.com/ngohongthong1832004/L2S.git
+const QUICK_START_SOURCE_UNIX = `# Linux / macOS — bash / zsh
+
+# 1. Clone repo (cần đạt 183⭐ ở L2SC repo thì L2S source mới mở)
+git clone https://github.com/ngohongthong1832004/L2S.git
 cd L2S
 
-# Linux/macOS
+# 2. Chạy start script — tự sinh .env random + build + up
 ./start.sh
 
-# Windows PowerShell
+# 3. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay
+#
+# Lệnh khác:
+#   ./start.sh down     — dừng stack
+#   ./start.sh logs     — xem log
+#   ./start.sh status   — kiểm tra service`
+
+const QUICK_START_SOURCE_WIN = `# Windows — PowerShell (KHÔNG dùng CMD)
+
+# 1. Clone repo (cần đạt 183 sao ở L2SC repo thì L2S source mới mở)
+git clone https://github.com/ngohongthong1832004/L2S.git
+cd L2S
+
+# 2. Cho phép chạy script PowerShell (1 lần, nếu chưa làm)
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+# 3. Chạy start script — tự sinh .env random + build + up
 .\\start.ps1
 
-# Mở http://localhost:9996 → admin/admin123`
+# 4. Mở http://localhost:9996 → admin/admin123 → ĐỔI PASSWORD ngay`
 
 function InstallL2SSection() {
   const [tab, setTab] = useState<'hub' | 'source'>('hub')
@@ -949,7 +976,8 @@ function InstallL2SSection() {
   const [composeCopied, setComposeCopied] = useState(false)
 
   const hubCode = os === 'unix' ? QUICK_START_HUB_UNIX : QUICK_START_HUB_WIN
-  const code = tab === 'hub' ? hubCode : QUICK_START_SOURCE
+  const sourceCode = os === 'unix' ? QUICK_START_SOURCE_UNIX : QUICK_START_SOURCE_WIN
+  const code = tab === 'hub' ? hubCode : sourceCode
 
   const doCopy = async () => {
     try {
@@ -1061,12 +1089,11 @@ function InstallL2SSection() {
           </div>
         )}
 
-        {/* OS toggle (chỉ hiện ở tab hub vì lệnh khác nhau giữa bash và PowerShell) */}
-        {tab === 'hub' && (
-          <div className="flex items-center justify-between mb-2 px-1">
-            <span className="text-xs text-slate-500">
-              Bước 2 — chọn OS để xem đúng cú pháp:
-            </span>
+        {/* OS toggle — bash vs PowerShell có cú pháp khác nhau */}
+        <div className="flex items-center justify-between mb-2 px-1">
+          <span className="text-xs text-slate-500">
+            {tab === 'hub' ? 'Bước 2 — chọn OS để xem đúng cú pháp:' : 'Chọn OS:'}
+          </span>
             <div className="inline-flex items-center gap-1 p-0.5 bg-slate-800/60 border border-slate-700 rounded-md">
               <button
                 onClick={() => setOs('unix')}
@@ -1089,8 +1116,7 @@ function InstallL2SSection() {
                 Windows (PowerShell)
               </button>
             </div>
-          </div>
-        )}
+        </div>
 
         {/* Terminal commands block (sinh .env + start) */}
         <div className="relative bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
@@ -1098,7 +1124,7 @@ function InstallL2SSection() {
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <Terminal size={13} />
               <span className="font-mono">
-                {tab === 'hub' ? (os === 'unix' ? 'bash' : 'PowerShell') : 'terminal'}
+                {os === 'unix' ? 'bash' : 'PowerShell'}
               </span>
               {tab === 'hub' && (
                 <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded">
