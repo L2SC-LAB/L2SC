@@ -217,8 +217,8 @@ Khi duyệt xong (thường <24h):
 
 ### Source code
 
-- **L2SC** (repo này, public): https://github.com/ngohongthong1832004/L2SC
-- **L2S** (gating 183⭐ trên L2SC): https://github.com/ngohongthong1832004/L2S
+- **L2SC** (repo này, public): https://github.com/L2SC-LAB/L2SC
+- **L2S** (gating 183⭐ trên L2SC): https://github.com/L2SC-LAB/L2S
 - **L2S Docker image** (luôn miễn phí): https://hub.docker.com/r/baphongpine/l2s
 
 → Star repo L2SC nếu thấy hữu ích để giúp đẩy nhanh ngày L2S source open hoàn toàn.
@@ -228,7 +228,7 @@ Khi duyệt xong (thường <24h):
 Bug / feature request / PR cho community space:
 
 ```bash
-git clone https://github.com/ngohongthong1832004/L2SC.git
+git clone https://github.com/L2SC-LAB/L2SC.git
 cd L2SC
 docker compose up -d   # backend + frontend dev server
 ```

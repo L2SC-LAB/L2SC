@@ -11,8 +11,8 @@ import {
 import { api, Stats } from '../api/client'
 import { useAuthStore } from '../store/authStore'
 
-const L2S_REPO_URL = 'https://github.com/ngohongthong1832004/L2S'
-const L2SC_REPO_URL = 'https://github.com/ngohongthong1832004/L2SC'
+const L2S_REPO_URL = 'https://github.com/L2SC-LAB/L2S'
+const L2SC_REPO_URL = 'https://github.com/L2SC-LAB/L2SC'
 const PROMO_VIDEO_URL = ''
 
 export default function Landing() {
@@ -942,7 +942,7 @@ docker compose up -d
 const QUICK_START_SOURCE_UNIX = `# Linux / macOS — bash / zsh
 
 # 1. Clone repo (cần đạt 183⭐ ở L2SC repo thì L2S source mới mở)
-git clone https://github.com/ngohongthong1832004/L2S.git
+git clone https://github.com/L2SC-LAB/L2S.git
 cd L2S
 
 # 2. Chạy start script — tự sinh .env random + build + up
@@ -958,7 +958,7 @@ cd L2S
 const QUICK_START_SOURCE_WIN = `# Windows — PowerShell (KHÔNG dùng CMD)
 
 # 1. Clone repo (cần đạt 183 sao ở L2SC repo thì L2S source mới mở)
-git clone https://github.com/ngohongthong1832004/L2S.git
+git clone https://github.com/L2SC-LAB/L2S.git
 cd L2S
 
 # 2. Cho phép chạy script PowerShell (1 lần, nếu chưa làm)

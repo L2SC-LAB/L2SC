@@ -21,7 +21,7 @@ L2SC nhẹ — chỉ 2 container (app + Postgres), không có Redis/MinIO/ML lib
 ## Setup dev local từ source
 
 ```bash
-git clone https://github.com/ngohongthong1832004/L2SC.git
+git clone https://github.com/L2SC-LAB/L2SC.git
 cd L2SC
 ```
 
