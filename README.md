@@ -46,10 +46,10 @@ services:
       - L2S_MINIO_ACCESS_KEY=${L2S_MINIO_ACCESS_KEY}
       - L2S_MINIO_SECRET_KEY=${L2S_MINIO_SECRET_KEY}
       - L2S_CLUSTER_TOKEN=${L2S_CLUSTER_TOKEN}
-      # Mặc định kết nối tới L2SC community (service = API, web = UI)
+      # L2SC community auto-connect: backend tự register node lên hub
+      # bằng L2S_CLUSTER_TOKEN — KHÔNG cần đăng ký account thủ công.
       - L2SC_URL=https://service.l2s.io.vn
       - L2SC_WEB_URL=https://l2s.io.vn
-      - L2SC_CONTRIBUTOR_API_KEY=${L2SC_CONTRIBUTOR_API_KEY:-}
       - L2S_PUBLIC_URL=${L2S_PUBLIC_URL:-}
     depends_on:
       postgres: { condition: service_healthy }
@@ -153,29 +153,11 @@ docker compose up -d
 
 ## 📤 Cách push (publish) workflow lên L2SC community
 
-Sau khi tạo workflow ưng ý trên L2S local của bạn, share lên L2SC để mọi người dùng:
+> 🎉 **Không cần đăng ký account thủ công.** L2S backend tự register lên hub
+> ngay lúc khởi động (dùng `L2S_CLUSTER_TOKEN` làm identity), idempotent qua
+> nhiều lần restart. Cài xong là publish được liền.
 
-### Bước 1 — Đăng ký contributor tại L2SC
-
-1. Mở https://l2s.io.vn/register
-2. Điền username + email + password
-3. Sau khi đăng ký, vào **Dashboard** → copy **API Key** (chuỗi dài bắt đầu bằng `l2sc_`)
-
-### Bước 2 — Cấu hình L2S local kết nối với contributor account
-
-Mở `.env` của L2S local (cùng thư mục `docker-compose.yml`), thêm dòng:
-
-```
-L2SC_CONTRIBUTOR_API_KEY=l2sc_xxx_paste_api_key_của_bạn
-```
-
-Restart L2S để áp dụng:
-
-```bash
-docker compose up -d
-```
-
-### Bước 3 — Publish workflow từ UI L2S
+### Publish workflow từ UI L2S
 
 1. Mở workflow muốn share, click nút **Share** (góc phải trên)
 2. Chọn tab **Community** (bên cạnh tab Users)
@@ -185,9 +167,22 @@ docker compose up -d
    - **Category**: ETL / ML / Analytics / Notification / Visualization / Integration / Other
    - **Tags**: keyword cho dễ search (vd `nlp`, `vietnamese`, `llm`, `sentiment`)
    - **Version**: `1.0.0` (lần sau update bump version)
-4. Click **Publish**
+4. Click **Publish** — workflow sẽ submit dưới contributor `node-<hash>`
+   (auto-generated từ token instance của bạn)
 
-### Bước 4 — Chờ admin duyệt
+### (Optional) Publish dưới username thật
+
+Mặc định contributor hiển thị là `node-<8-ký-tự-hash>`. Muốn xuất hiện dưới
+username thật trên hub:
+
+1. Đăng ký tại https://l2s.io.vn/register → copy **API Key** từ Dashboard
+2. Sửa `.env` của L2S local, thêm:
+   ```
+   L2SC_CONTRIBUTOR_API_KEY=l2sc_xxx_paste_api_key_của_bạn
+   ```
+3. `docker compose up -d` — workflow publish sau đó sẽ gắn username này.
+
+### Sau khi publish — chờ admin duyệt
 
 Workflow sẽ ở trạng thái **pending review**. Admin L2SC kiểm tra:
 - Workflow chạy được không (test trên instance demo)
