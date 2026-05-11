@@ -95,12 +95,15 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <a href="#install" className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-emerald-500/30">
-              <Terminal size={18} /> Cài đặt L2S
+            <a href="https://workflows.l2s.io.vn/login" className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-emerald-500/30">
+              <Terminal size={18} /> Trải nghiệm ngay  
             </a>
-            <Link to="/browse"   className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-teal-500/30">
+            <a href="#install" className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-emerald-500/30">
+              <Terminal size={18} /> Cài đặt L2S  
+            </a>
+            {/* <Link to="/browse"   className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-teal-500/30">
               <Globe size={18} /> Browse Workflows
-            </Link>
+            </Link> */}
             <Link to="/register" className="flex items-center gap-2 px-7 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-white rounded-xl transition font-semibold text-base">
               <Upload size={18} /> Contribute
             </Link>

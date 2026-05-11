@@ -80,7 +80,20 @@ class SetPasswordRequest(BaseModel):
     def _new_rule(cls, v: str) -> str:
         if len(v) < 6:
             raise ValueError("Mật khẩu phải có ít nhất 6 ký tự")
+        if len(v) > 128:
+            raise ValueError("Mật khẩu tối đa 128 ký tự")
         return v
+
+
+class SetPasswordResponse(BaseModel):
+    """
+    Trả new_api_key vì /set-password rotate key cũ — key đăng ký ban đầu
+    (có thể đã bị leak qua screenshot/copy) sẽ không còn dùng được.
+    FE phải clear session + bắt user đăng nhập lại bằng email + password.
+    """
+    message: str
+    api_key: str
+    rotated: bool = True
 
 
 class ContributorOut(BaseModel):

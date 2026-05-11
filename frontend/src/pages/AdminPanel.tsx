@@ -8,7 +8,9 @@ import {
 } from 'lucide-react'
 import { api, WorkflowOut, AdminStats } from '../api/client'
 import Header from '../components/Header'
+import AdminContributors from './AdminContributors'
 
+type AdminView = 'workflows' | 'contributors'
 type TabStatus = 'pending' | 'approved' | 'rejected' | 'all'
 const CATEGORIES = ['ETL', 'ML', 'Analytics', 'Notification', 'Visualization', 'Integration', 'Other']
 const PAGE_SIZE = 20
@@ -25,6 +27,7 @@ function formatRelative(iso?: string | null) {
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 export default function AdminPanel() {
+  const [view, setView] = useState<AdminView>('workflows')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [tab, setTab] = useState<TabStatus>('pending')
   const [q, setQ] = useState('')
@@ -136,7 +139,7 @@ export default function AdminPanel() {
               <span className="text-sm font-medium text-slate-200 truncate">Admin Panel</span>
             </div>
             <button
-              onClick={() => reload(page, q, category, tab)}
+              onClick={() => view === 'workflows' ? reload(page, q, category, tab) : null}
               disabled={loading}
               className="p-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 hover:text-white rounded-lg transition disabled:opacity-50"
               title="Làm mới"
@@ -145,6 +148,39 @@ export default function AdminPanel() {
             </button>
           </div>
 
+          {/* View switcher: Workflows | Contributors */}
+          <div className="flex gap-1 p-1 mb-4 sm:mb-6 bg-slate-900 rounded-lg border border-slate-700 w-max">
+            <button
+              onClick={() => setView('workflows')}
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded text-xs sm:text-sm font-medium transition ${
+                view === 'workflows'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <WorkflowIcon size={14} />
+              Workflows
+            </button>
+            <button
+              onClick={() => setView('contributors')}
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded text-xs sm:text-sm font-medium transition ${
+                view === 'contributors'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Users size={14} />
+              Contributors
+              {stats?.total_contributors != null && (
+                <span className="opacity-70">{stats.total_contributors}</span>
+              )}
+            </button>
+          </div>
+
+          {view === 'contributors' ? (
+            <AdminContributors showToast={showToast} />
+          ) : (
+          <>
           {/* Page header */}
           <div className="mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-3xl font-bold text-white">Quản lý Workflows</h2>
@@ -279,6 +315,8 @@ export default function AdminPanel() {
                 </div>
               )}
             </>
+          )}
+          </>
           )}
         </div>
       </div>

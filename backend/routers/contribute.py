@@ -10,7 +10,7 @@ from backend import db_models
 from datetime import datetime
 from backend.models import (
     ContributorRegister, ContributorOut,
-    LoginRequest, LoginResponse, SetPasswordRequest,
+    LoginRequest, LoginResponse, SetPasswordRequest, SetPasswordResponse,
     NodeRegister, NodeOut,
     WorkflowSubmit, WorkflowUpdate, WorkflowOut,
     NodeAuthRequest, NodeAuthResponse,
@@ -141,8 +141,10 @@ def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     return LoginResponse(api_key=contributor.api_key, contributor=contributor)
 
 
-@router.post("/set-password")
+@router.post("/set-password", response_model=SetPasswordResponse)
+@limiter.limit(LIMIT_AUTH)
 def set_password(
+    request: Request,
     body: SetPasswordRequest,
     contributor=Depends(get_contributor),
     db: Session = Depends(get_db),
@@ -151,13 +153,29 @@ def set_password(
     Set/đổi mật khẩu cho contributor đang login bằng api_key.
     - Nếu chưa có password trước đó: chỉ cần new_password.
     - Nếu đã có: phải cung cấp current_password đúng.
+
+    🔐 Security: sau khi set/đổi password, api_key cũ sẽ bị rotate (vô hiệu hoá).
+    Lý do: api_key sinh ra lúc /register có thể đã bị lộ (user copy ra ngoài, screenshot).
+    User phải đăng nhập lại bằng email + mật khẩu để lấy api_key mới.
     """
+    was_first_time = not contributor.hashed_password
     if contributor.hashed_password:
         if not body.current_password or not verify_password(body.current_password, contributor.hashed_password):
             raise HTTPException(status_code=400, detail="Mật khẩu hiện tại không đúng")
     contributor.hashed_password = hash_password(body.new_password)
+    # Rotate api_key — key cũ (có thể đã leak lúc /register) sẽ không còn auth được
+    new_key = generate_api_key()
+    contributor.api_key = new_key
     db.commit()
-    return {"message": "Đã cập nhật mật khẩu"}
+    return SetPasswordResponse(
+        message=(
+            "Đã set mật khẩu lần đầu. API key cũ đã bị thay — vui lòng đăng nhập lại."
+            if was_first_time else
+            "Đã đổi mật khẩu. API key cũ đã bị thay — vui lòng đăng nhập lại."
+        ),
+        api_key=new_key,
+        rotated=True,
+    )
 
 
 @router.get("/me", response_model=ContributorOut)

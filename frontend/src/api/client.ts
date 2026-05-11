@@ -181,6 +181,25 @@ export interface AdminStats extends Stats {
   rejected_workflows: number
 }
 
+export interface AdminContributorOut {
+  id: string
+  username: string
+  email: string
+  is_admin: boolean
+  is_active: boolean
+  has_password: boolean
+  github_url: string | null
+  bio: string | null
+  created_at: string
+  workflow_count: number
+  node_count: number
+}
+
+export interface AdminContributorList {
+  total: number
+  contributors: AdminContributorOut[]
+}
+
 export const api = {
   // ---------- Public ----------
   listWorkflows: (params?: { category?: string; tag?: string; q?: string }) =>
@@ -219,7 +238,12 @@ export const api = {
     http.post<LoginResponse>('/api/contribute/login', body).then((r) => r.data),
 
   setPassword: (body: { new_password: string; current_password?: string }) =>
-    http.post<{ message: string }>('/api/contribute/set-password', body).then((r) => r.data),
+    http
+      .post<{ message: string; api_key: string; rotated: boolean }>(
+        '/api/contribute/set-password',
+        body,
+      )
+      .then((r) => r.data),
 
   getMe: () => http.get<ContributorOut>('/api/contribute/me').then((r) => r.data),
 
@@ -326,6 +350,26 @@ export const api = {
 
   pinThread: (id: string) => http.post<ForumThreadSummary>(`/api/forum/threads/${id}/pin`).then((r) => r.data),
   lockThread: (id: string) => http.post<ForumThreadSummary>(`/api/forum/threads/${id}/lock`).then((r) => r.data),
+
+  // ---------- Admin contributor management ----------
+  listAdminContributors: (params?: {
+    q?: string
+    is_admin?: boolean
+    is_active?: boolean
+    skip?: number
+    limit?: number
+  }) =>
+    http.get<AdminContributorList>('/api/admin/contributors', { params }).then((r) => r.data),
+
+  toggleContributorAdmin: (id: string) =>
+    http
+      .post<{ username: string; is_admin: boolean }>(
+        `/api/admin/contributors/${id}/toggle-admin`,
+      )
+      .then((r) => r.data),
+
+  deleteContributor: (id: string) =>
+    http.delete<{ message: string }>(`/api/admin/contributors/${id}`).then((r) => r.data),
 
   // backward-compat kept for other callers
   getPendingWorkflows: () =>

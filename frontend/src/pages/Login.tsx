@@ -1,12 +1,13 @@
 import { useState, FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { KeyRound, AlertCircle, Globe, Mail, Lock } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { KeyRound, AlertCircle, Globe, Mail, Lock, Info } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 
 type Mode = 'password' | 'apikey'
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, loginWithPassword } = useAuthStore()
   const [mode, setMode] = useState<Mode>('password')
   const [identifier, setIdentifier] = useState('')
@@ -14,6 +15,8 @@ export default function Login() {
   const [apiKey, setApiKey] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  // Banner message từ navigate state (vd: sau set-password rotate api_key)
+  const notice = (location.state as { msg?: string } | null)?.msg
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -71,6 +74,13 @@ export default function Login() {
           </div>
           <h2 className="text-2xl font-bold text-white">Đăng nhập</h2>
         </div>
+
+        {notice && (
+          <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2 text-amber-200 text-xs">
+            <Info size={14} className="mt-0.5 shrink-0" />
+            <span>{notice}</span>
+          </div>
+        )}
 
         <div className="flex gap-1 p-1 mb-5 bg-slate-900 rounded-lg border border-slate-700">
           <button

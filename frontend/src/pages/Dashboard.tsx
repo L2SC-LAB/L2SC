@@ -25,7 +25,7 @@ function formatRelative(iso?: string | null) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { contributor, refreshMe } = useAuthStore()
+  const { contributor, refreshMe, logout } = useAuthStore()
   const [tab, setTab] = useState<Tab>('workflows')
   const [wfCount, setWfCount] = useState<{ total: number; pending: number; approved: number }>({ total: 0, pending: 0, approved: 0 })
   const [nodeCount, setNodeCount] = useState(0)
@@ -209,9 +209,13 @@ export default function Dashboard() {
           hasPassword={!!contributor?.has_password}
           onClose={() => setShowPwdModal(false)}
           onSuccess={() => {
+            // API key đã rotate ở backend — clear session + bắt user đăng nhập lại
             setShowPwdModal(false)
-            refreshMe()
-            showToast('ok', 'Đã cập nhật mật khẩu')
+            logout()
+            navigate('/login', {
+              replace: true,
+              state: { msg: 'Đã cập nhật mật khẩu. Vui lòng đăng nhập lại để lấy API key mới.' },
+            })
           }}
         />
       )}
@@ -275,6 +279,10 @@ function ChangePasswordModal({
               {hasPassword
                 ? 'Nhập mật khẩu hiện tại và mật khẩu mới'
                 : 'Từ lần sau có thể đăng nhập bằng email/username + mật khẩu thay vì API Key'}
+            </p>
+            <p className="text-[11px] text-amber-400 mt-2 flex items-start gap-1">
+              <Shield size={12} className="mt-0.5 shrink-0" />
+              <span>API key hiện tại sẽ bị thay sau khi đổi — bạn cần đăng nhập lại.</span>
             </p>
           </div>
           <button
