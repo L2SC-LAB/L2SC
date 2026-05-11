@@ -47,6 +47,11 @@ def init_db():
                 with engine.connect() as conn:
                     conn.execute(text("ALTER TABLE contributors ADD COLUMN hashed_password VARCHAR"))
                     conn.commit()
+            if "created_ip" not in ccols:
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE contributors ADD COLUMN created_ip VARCHAR"))
+                    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_contributors_created_ip ON contributors(created_ip)"))
+                    conn.commit()
 
         # Bảng node_docs được tạo bởi create_all ở trên; không cần ALTER thêm.
     except Exception as e:

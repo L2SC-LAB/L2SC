@@ -2,12 +2,13 @@
 Contributor endpoints — yêu cầu X-API-Key.
 Dùng để đăng ký, submit/update workflow và register L2S node.
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from backend.database import get_db
 from backend import db_models
-from datetime import datetime
+from datetime import datetime, timedelta
 from backend.models import (
     ContributorRegister, ContributorOut,
     LoginRequest, LoginResponse, SetPasswordRequest, SetPasswordResponse,
@@ -21,6 +22,14 @@ from backend.auth import (
 )
 from backend.routers.public import _to_out
 from backend.rate_limit import limiter, LIMIT_REGISTER, LIMIT_AUTH, LIMIT_NODE_AUTH
+from slowapi.util import get_remote_address
+
+logger = logging.getLogger(__name__)
+
+# Max contributor được phép tạo từ 1 IP trong 24h. Chặn attacker bypass rate limit
+# bằng cách chờ giữa mỗi request. Override qua env nếu cần.
+import os
+MAX_REGISTER_PER_IP_PER_DAY = int(os.getenv("L2SC_MAX_REGISTER_PER_IP_PER_DAY", "3"))
 
 router = APIRouter(prefix="/api/contribute", tags=["contribute"])
 
@@ -92,7 +101,37 @@ def register(request: Request, body: ContributorRegister, db: Session = Depends(
     """
     Đăng ký contributor. Trả về api_key — lưu lại, không thể lấy lại.
     Mỗi email/username chỉ đăng ký một lần.
+
+    Anti-spam:
+    - Honeypot field 'website' phải empty (humans không thấy field, bots auto-fill)
+    - Mỗi IP tối đa MAX_REGISTER_PER_IP_PER_DAY (default 3) account/24h
+    - Đã có rate limit 5/min/IP ở decorator
     """
+    client_ip = get_remote_address(request) or ""
+
+    # Layer 1: Honeypot — bot auto-fill, human không thấy field
+    if body.website:
+        logger.warning(f"[register] honeypot triggered from IP={client_ip} username={body.username!r}")
+        # Trả message vague để bot không biết cách bypass
+        raise HTTPException(status_code=400, detail="Đăng ký thất bại. Vui lòng thử lại.")
+
+    # Layer 2: per-IP daily cap
+    if client_ip:
+        cutoff = datetime.utcnow() - timedelta(hours=24)
+        recent = db.query(db_models.Contributor).filter(
+            db_models.Contributor.created_ip == client_ip,
+            db_models.Contributor.created_at >= cutoff,
+        ).count()
+        if recent >= MAX_REGISTER_PER_IP_PER_DAY:
+            logger.warning(f"[register] daily IP cap hit ({recent}) from IP={client_ip}")
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"IP của bạn đã đăng ký {recent} tài khoản trong 24h. "
+                    f"Vui lòng thử lại sau hoặc liên hệ admin nếu cần thêm."
+                ),
+            )
+
     if db.query(db_models.Contributor).filter(db_models.Contributor.email == body.email).first():
         raise HTTPException(status_code=400, detail="Email đã được đăng ký")
     if db.query(db_models.Contributor).filter(db_models.Contributor.username == body.username).first():
@@ -107,6 +146,7 @@ def register(request: Request, body: ContributorRegister, db: Session = Depends(
         hashed_password=hash_password(body.password) if body.password else None,
         github_url=body.github_url,
         bio=body.bio,
+        created_ip=client_ip or None,
     )
     db.add(contributor)
     db.commit()

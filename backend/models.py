@@ -16,6 +16,9 @@ class ContributorRegister(BaseModel):
     password: Optional[str] = None   # Optional để backward-compat; FE mới sẽ luôn gửi
     github_url: Optional[str] = None
     bio: Optional[str] = None
+    # Honeypot: field ẩn trong form — humans never fill, bots auto-fill.
+    # Backend reject nếu non-empty. Đổi tên định kỳ nếu bot adapt.
+    website: Optional[str] = None
 
     @field_validator("username")
     @classmethod

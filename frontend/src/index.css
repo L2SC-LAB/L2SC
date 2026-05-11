@@ -51,3 +51,45 @@ html {
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 .scrollbar-thin::-webkit-scrollbar-thumb { background-color: rgb(51 65 85); border-radius: 3px; }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: rgb(71 85 105); }
+
+/* ────── CTA "đập đập" animations ────── */
+/* Glow halo nhịp tim — scale + opacity wave, kéo attention mà không gây chói. */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55), 0 10px 35px -10px rgba(16, 185, 129, 0.55); }
+  50%      { box-shadow: 0 0 0 12px rgba(20, 184, 166, 0),    0 10px 45px -8px rgba(16, 185, 129, 0.75); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2.2s ease-in-out infinite;
+}
+
+/* Subtle scale "heartbeat" cho secondary CTA */
+@keyframes heartbeat {
+  0%, 100%      { transform: scale(1); }
+  10%, 30%      { transform: scale(1.04); }
+  20%           { transform: scale(0.98); }
+}
+.animate-heartbeat {
+  animation: heartbeat 2.8s ease-in-out infinite;
+}
+
+/* Shine sweep — gradient highlight chạy ngang button */
+@keyframes shine-sweep {
+  0%   { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%)  skewX(-20deg); }
+}
+.shine-sweep::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+  transform: translateX(-120%) skewX(-20deg);
+  animation: shine-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Pause animation khi user prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-glow,
+  .animate-heartbeat { animation: none; }
+  .shine-sweep::before { display: none; }
+}

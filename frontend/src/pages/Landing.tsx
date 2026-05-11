@@ -50,6 +50,19 @@ export default function Landing() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {/* GitHub link — link sang repo L2SC, có star count hint */}
+            <a
+              href={L2SC_REPO_URL}
+              target="_blank"
+              rel="noreferrer"
+              title="Star L2SC trên GitHub"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-white bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-600 rounded-lg transition text-sm font-medium"
+            >
+              <Github size={15} />
+              <span className="hidden md:inline">GitHub</span>
+              <Star size={12} className="text-amber-400 fill-amber-400" />
+            </a>
+
             {apiKey ? (
               <Link to="/dashboard" className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-lg transition text-sm font-medium">
                 Dashboard <ArrowRight size={14} />
@@ -95,18 +108,38 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <a href="https://workflows.l2s.io.vn/login" className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-emerald-500/30">
-              <Terminal size={18} /> Trải nghiệm ngay  
+            {/* Primary CTA — pulse-glow halo "đập đập" + shine sweep */}
+            <a
+              href="https://workflows.l2s.io.vn/login"
+              className="shine-sweep animate-pulse-glow relative overflow-hidden flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl transition-transform hover:scale-105 active:scale-95 font-semibold text-base"
+            >
+              <Terminal size={18} /> Trải nghiệm ngay
+              <ArrowRight size={16} className="ml-0.5 transition-transform group-hover:translate-x-1" />
             </a>
-            <a href="#install" className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-emerald-500/30">
-              <Terminal size={18} /> Cài đặt L2S  
+
+            {/* Secondary CTA — heartbeat subtle scale */}
+            <a
+              href="#install"
+              className="animate-heartbeat flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-cyan-500 to-sky-500 hover:from-cyan-400 hover:to-sky-400 text-white rounded-xl transition-transform hover:scale-105 active:scale-95 font-semibold text-base shadow-2xl shadow-cyan-500/30"
+            >
+              <Download size={18} /> Cài đặt L2S
             </a>
-            {/* <Link to="/browse"   className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-white rounded-xl transition font-semibold text-base shadow-2xl shadow-teal-500/30">
-              <Globe size={18} /> Browse Workflows
-            </Link> */}
-            <Link to="/register" className="flex items-center gap-2 px-7 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-white rounded-xl transition font-semibold text-base">
+
+            <Link to="/register" className="flex items-center gap-2 px-7 py-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-white rounded-xl transition hover:scale-105 active:scale-95 font-semibold text-base">
               <Upload size={18} /> Contribute
             </Link>
+
+            {/* GitHub Star CTA — khuyến khích star repo */}
+            <a
+              href={L2SC_REPO_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="group flex items-center gap-2 px-5 py-3.5 bg-slate-900/80 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-500/60 text-amber-300 hover:text-amber-200 rounded-xl transition hover:scale-105 active:scale-95 font-semibold text-base"
+            >
+              <Github size={18} />
+              <span>Star GitHub</span>
+              <Star size={14} className="text-amber-400 fill-amber-400 group-hover:rotate-12 transition-transform" />
+            </a>
           </div>
 
           {stats && (

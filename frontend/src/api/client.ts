@@ -226,6 +226,8 @@ export const api = {
     password?: string
     github_url?: string
     bio?: string
+    /** Honeypot — humans always send empty. Bots fill → backend rejects 400. */
+    website?: string
   }) =>
     http
       .post<{ id: string; username: string; api_key: string; message: string }>(

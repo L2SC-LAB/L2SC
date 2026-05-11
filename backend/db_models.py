@@ -21,6 +21,9 @@ class Contributor(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # IP lúc đăng ký — dùng cho anti-spam per-IP daily cap. Nullable vì admin
+    # seed account + node-auto-register không có IP.
+    created_ip = Column(String, nullable=True, index=True)
 
     nodes = relationship("L2SNode", back_populates="owner", cascade="all, delete-orphan")
     workflows = relationship("PublicWorkflow", back_populates="contributor", cascade="all, delete-orphan")

@@ -12,6 +12,8 @@ export default function Register() {
     confirm: '',
     github_url: '',
     bio: '',
+    // Honeypot: humans không thấy field này; bot auto-fill → backend reject
+    website: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,6 +42,7 @@ export default function Register() {
         password: form.password,
         github_url: form.github_url.trim() || undefined,
         bio: form.bio.trim() || undefined,
+        website: form.website,   // honeypot — always empty cho human
       })
       setResult({ api_key: res.api_key, username: res.username })
     } catch (err: any) {
@@ -130,6 +133,23 @@ export default function Register() {
         )}
 
         <form onSubmit={submit} className="space-y-4">
+          {/*
+            Honeypot field — humans không thấy (ẩn off-screen + tabindex=-1 +
+            aria-hidden). Bots auto-fill form sẽ điền vào → backend reject 400.
+            KHÔNG dùng `display:none` vì một số bot biết bỏ qua các field display:none.
+          */}
+          <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
+            <label>Website (để trống)</label>
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={form.website}
+              onChange={update('website')}
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">
               Username <span className="text-red-400">*</span>
