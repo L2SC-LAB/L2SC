@@ -9,10 +9,13 @@ from uuid import uuid4
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from backend.database import init_db, get_db, SessionLocal
 from backend import db_models
 from backend.auth import generate_api_key
+from backend.rate_limit import limiter
 from backend.routers.public import router as public_router, runs_router, stats_router
 from backend.routers.contribute import router as contribute_router
 from backend.routers.admin import router as admin_router
@@ -53,6 +56,8 @@ def _seed_admin():
         db.close()
 
 
+_docs_enabled = os.getenv("L2SC_DOCS_ENABLED", "false").lower() == "true"
+
 app = FastAPI(
     title="L2SC — L2S Communicate",
     description=(
@@ -64,7 +69,14 @@ app = FastAPI(
     ),
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
 )
+
+# Rate limiting middleware (slowapi). Tắt qua env L2SC_RATE_LIMIT_ENABLED=false.
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS — production set L2SC_CORS_ORIGINS=https://l2s.io.vn,https://www.l2s.io.vn
 # Default "*" cho dev. Same-origin behind cloudflared (l2s.io.vn → frontend → /api → backend)

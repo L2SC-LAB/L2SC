@@ -227,6 +227,8 @@ docker compose up -d
 - [ ] `L2SC_CORS_ORIGINS=https://yourdomain.com` (whitelist)
 - [ ] HTTPS qua Cloudflare Tunnel hoặc reverse proxy
 - [ ] Backup định kỳ Postgres
+- [ ] `L2SC_DOCS_ENABLED=false` (mặc định) — giữ `/docs` ẩn với public (bật `true` chỉ khi dev)
+- [ ] `L2SC_RATE_LIMIT_ENABLED=true` (mặc định) — bật rate limit cho `/register`, `/login`, `/node-auth`
 
 ---
 

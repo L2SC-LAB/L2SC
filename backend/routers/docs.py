@@ -10,7 +10,7 @@ import logging
 import time
 from typing import Any, Optional
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend import db_models
@@ -161,7 +161,10 @@ async def list_docs(db: Session = Depends(get_db)):
 
 
 @router.get("/{plugin_type}", response_model=NodeDocDetail)
-async def get_doc(plugin_type: str, db: Session = Depends(get_db)):
+async def get_doc(
+    plugin_type: str = Path(..., max_length=100, pattern=r'^[a-zA-Z0-9_\-]+$'),
+    db: Session = Depends(get_db),
+):
     plugins = await _fetch_plugins(db)
     meta = next((p for p in plugins if p.get("type") == plugin_type), None)
     if not meta:
@@ -195,8 +198,8 @@ async def get_doc(plugin_type: str, db: Session = Depends(get_db)):
 
 @router.put("/{plugin_type}", response_model=NodeDocDetail)
 async def upsert_doc(
-    plugin_type: str,
-    body: NodeDocEdit,
+    plugin_type: str = Path(..., max_length=100, pattern=r'^[a-zA-Z0-9_\-]+$'),
+    body: NodeDocEdit = ...,
     admin=Depends(get_admin),
     db: Session = Depends(get_db),
 ):

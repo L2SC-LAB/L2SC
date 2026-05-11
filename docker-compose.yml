@@ -7,6 +7,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:${L2SC_POSTGRES_PASSWORD:-postgres}@postgres:5432/l2sc
       - L2SC_ADMIN_API_KEY=${L2SC_ADMIN_API_KEY:-}   # để trống = random mỗi lần start
+      - L2SC_RATE_LIMIT_ENABLED=${L2SC_RATE_LIMIT_ENABLED:-true}
+      - L2SC_DOCS_ENABLED=${L2SC_DOCS_ENABLED:-false}
     depends_on:
       postgres:
         condition: service_healthy

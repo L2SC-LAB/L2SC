@@ -1,6 +1,11 @@
+import re
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Any, Optional
 from datetime import datetime
+
+_URL_RE = re.compile(r'^https?://')
+
+WORKFLOW_CATEGORIES = ("ETL", "ML", "Analytics", "Notification", "Visualization", "Integration", "Other")
 
 
 # ---------- Contributor ----------
@@ -12,6 +17,21 @@ class ContributorRegister(BaseModel):
     github_url: Optional[str] = None
     bio: Optional[str] = None
 
+    @field_validator("username")
+    @classmethod
+    def _username_rule(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 3 or len(v) > 64:
+            raise ValueError("Username phải từ 3–64 ký tự")
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def _email_rule(cls, v: str) -> str:
+        if len(v) > 254:
+            raise ValueError("Email quá dài")
+        return v.strip().lower()
+
     @field_validator("password")
     @classmethod
     def _password_rule(cls, v: Optional[str]) -> Optional[str]:
@@ -19,6 +39,15 @@ class ContributorRegister(BaseModel):
             return None
         if len(v) < 6:
             raise ValueError("Mật khẩu phải có ít nhất 6 ký tự")
+        if len(v) > 128:
+            raise ValueError("Mật khẩu tối đa 128 ký tự")
+        return v
+
+    @field_validator("bio")
+    @classmethod
+    def _bio_rule(cls, v: Optional[str]) -> Optional[str]:
+        if v and len(v) > 500:
+            raise ValueError("Bio tối đa 500 ký tự")
         return v
 
 
@@ -26,6 +55,20 @@ class LoginRequest(BaseModel):
     """Đăng nhập bằng email/username + password. Trả về api_key để FE lưu."""
     identifier: str   # email HOẶC username
     password: str
+
+    @field_validator("identifier")
+    @classmethod
+    def _ident_rule(cls, v: str) -> str:
+        if len(v) > 254:
+            raise ValueError("Identifier quá dài")
+        return v.strip()
+
+    @field_validator("password")
+    @classmethod
+    def _pwd_rule(cls, v: str) -> str:
+        if len(v) > 128:
+            raise ValueError("Password quá dài")
+        return v
 
 
 class SetPasswordRequest(BaseModel):
@@ -90,6 +133,46 @@ class WorkflowSubmit(BaseModel):
     l2s_workflow_id: Optional[str] = None
     version: str = "1.0.0"
 
+    @field_validator("title")
+    @classmethod
+    def _title(cls, v: str) -> str:
+        v = v.strip()
+        if len(v) < 3 or len(v) > 200:
+            raise ValueError("Title phải từ 3–200 ký tự")
+        return v
+
+    @field_validator("description")
+    @classmethod
+    def _description(cls, v: Optional[str]) -> Optional[str]:
+        if v and len(v) > 2000:
+            raise ValueError("Description tối đa 2000 ký tự")
+        return v
+
+    @field_validator("category")
+    @classmethod
+    def _category(cls, v: Optional[str]) -> Optional[str]:
+        if v and v not in WORKFLOW_CATEGORIES:
+            raise ValueError(f"Category phải là một trong: {', '.join(WORKFLOW_CATEGORIES)}")
+        return v
+
+    @field_validator("tags")
+    @classmethod
+    def _tags(cls, v: list[str]) -> list[str]:
+        if len(v) > 10:
+            raise ValueError("Tối đa 10 tags")
+        for tag in v:
+            if len(tag) > 50:
+                raise ValueError("Mỗi tag tối đa 50 ký tự")
+        return v
+
+    @field_validator("version")
+    @classmethod
+    def _version(cls, v: str) -> str:
+        v = v.strip()
+        if not re.match(r'^\d+\.\d+\.\d+', v) or len(v) > 20:
+            raise ValueError("Version phải dạng x.y.z (vd: 1.0.0)")
+        return v
+
 class WorkflowUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
@@ -100,6 +183,49 @@ class WorkflowUpdate(BaseModel):
     l2s_workflow_id: Optional[str] = None
     version: Optional[str] = None
     is_active: Optional[bool] = None
+
+    @field_validator("title")
+    @classmethod
+    def _title(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if len(v) < 3 or len(v) > 200:
+                raise ValueError("Title phải từ 3–200 ký tự")
+        return v
+
+    @field_validator("description")
+    @classmethod
+    def _description(cls, v: Optional[str]) -> Optional[str]:
+        if v and len(v) > 2000:
+            raise ValueError("Description tối đa 2000 ký tự")
+        return v
+
+    @field_validator("category")
+    @classmethod
+    def _category(cls, v: Optional[str]) -> Optional[str]:
+        if v and v not in WORKFLOW_CATEGORIES:
+            raise ValueError(f"Category phải là một trong: {', '.join(WORKFLOW_CATEGORIES)}")
+        return v
+
+    @field_validator("tags")
+    @classmethod
+    def _tags(cls, v: Optional[list[str]]) -> Optional[list[str]]:
+        if v is not None:
+            if len(v) > 10:
+                raise ValueError("Tối đa 10 tags")
+            for tag in v:
+                if len(tag) > 50:
+                    raise ValueError("Mỗi tag tối đa 50 ký tự")
+        return v
+
+    @field_validator("version")
+    @classmethod
+    def _version(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if not re.match(r'^\d+\.\d+\.\d+', v) or len(v) > 20:
+                raise ValueError("Version phải dạng x.y.z (vd: 1.0.0)")
+        return v
 
 class WorkflowOut(BaseModel):
     id: str
@@ -178,6 +304,23 @@ class NodeAuthRequest(BaseModel):
     node_token: str    # = L2S_CLUSTER_TOKEN — unique per installation
     base_url: str      # http://192.168.x.x:9995
     name: str          # "L2S @ hostname"
+
+    @field_validator("base_url")
+    @classmethod
+    def _base_url(cls, v: str) -> str:
+        v = v.strip().rstrip("/")
+        if not _URL_RE.match(v):
+            raise ValueError("base_url phải bắt đầu với http:// hoặc https://")
+        if len(v) > 500:
+            raise ValueError("base_url tối đa 500 ký tự")
+        return v
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v: str) -> str:
+        if len(v.strip()) > 200:
+            raise ValueError("name tối đa 200 ký tự")
+        return v.strip()
 
 class NodeAuthResponse(BaseModel):
     api_key: str
@@ -262,6 +405,13 @@ class NodeDocEdit(BaseModel):
     when_to_use: Optional[str] = None
     example_md: Optional[str] = None
     faq_md: Optional[str] = None
+
+    @field_validator("what_it_does", "when_to_use", "example_md", "faq_md", mode="before")
+    @classmethod
+    def _md_limit(cls, v: Optional[str]) -> Optional[str]:
+        if v and len(v) > 50_000:
+            raise ValueError("Nội dung markdown tối đa 50.000 ký tự")
+        return v
 
 
 # ---------- Forum ----------

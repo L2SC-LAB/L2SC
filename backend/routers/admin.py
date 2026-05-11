@@ -27,7 +27,8 @@ def _filter_workflows(db: Session, status: str, q: Optional[str], category: Opti
     # else "all": no filter
 
     if q:
-        like = f"%{q}%"
+        safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{safe_q}%"
         query = query.filter(
             db_models.PublicWorkflow.title.ilike(like) |
             db_models.PublicWorkflow.description.ilike(like)
@@ -49,9 +50,9 @@ def pending_workflows(admin=Depends(get_admin), db: Session = Depends(get_db)):
 
 @router.get("/workflows", response_model=list[WorkflowOut])
 def all_workflows(
-    status: str = Query("all", description="all | pending | approved | rejected"),
-    q: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
+    status: str = Query("all", description="all | pending | approved | rejected", pattern="^(all|pending|approved|rejected)$"),
+    q: Optional[str] = Query(None, max_length=200),
+    category: Optional[str] = Query(None, max_length=50),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=200),
     admin=Depends(get_admin),
@@ -66,9 +67,9 @@ def all_workflows(
 
 @router.get("/workflows/count")
 def count_workflows(
-    status: str = Query("all"),
-    q: Optional[str] = Query(None),
-    category: Optional[str] = Query(None),
+    status: str = Query("all", pattern="^(all|pending|approved|rejected)$"),
+    q: Optional[str] = Query(None, max_length=200),
+    category: Optional[str] = Query(None, max_length=50),
     admin=Depends(get_admin),
     db: Session = Depends(get_db),
 ):

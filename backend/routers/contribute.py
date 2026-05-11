@@ -2,7 +2,7 @@
 Contributor endpoints — yêu cầu X-API-Key.
 Dùng để đăng ký, submit/update workflow và register L2S node.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from uuid import uuid4
 from backend.database import get_db
@@ -20,6 +20,7 @@ from backend.auth import (
     hash_password, verify_password,
 )
 from backend.routers.public import _to_out
+from backend.rate_limit import limiter, LIMIT_REGISTER, LIMIT_AUTH, LIMIT_NODE_AUTH
 
 router = APIRouter(prefix="/api/contribute", tags=["contribute"])
 
@@ -27,7 +28,8 @@ router = APIRouter(prefix="/api/contribute", tags=["contribute"])
 # ---------- Auto-registration cho L2S node (public, không cần key trước) ----------
 
 @router.post("/node-auth", response_model=NodeAuthResponse)
-def node_auth(body: NodeAuthRequest, db: Session = Depends(get_db)):
+@limiter.limit(LIMIT_NODE_AUTH)
+def node_auth(request: Request, body: NodeAuthRequest, db: Session = Depends(get_db)):
     """
     L2S gọi endpoint này lúc khởi động để tự đăng ký với L2SC.
     Dùng L2S_CLUSTER_TOKEN làm identity — không cần tạo tài khoản thủ công.
@@ -85,7 +87,8 @@ def node_auth(body: NodeAuthRequest, db: Session = Depends(get_db)):
 # ---------- Đăng ký (public, không cần key) ----------
 
 @router.post("/register", response_model=dict)
-def register(body: ContributorRegister, db: Session = Depends(get_db)):
+@limiter.limit(LIMIT_REGISTER)
+def register(request: Request, body: ContributorRegister, db: Session = Depends(get_db)):
     """
     Đăng ký contributor. Trả về api_key — lưu lại, không thể lấy lại.
     Mỗi email/username chỉ đăng ký một lần.
@@ -122,7 +125,8 @@ def register(body: ContributorRegister, db: Session = Depends(get_db)):
 # ---------- Login bằng email/username + password ----------
 
 @router.post("/login", response_model=LoginResponse)
-def login(body: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit(LIMIT_AUTH)
+def login(request: Request, body: LoginRequest, db: Session = Depends(get_db)):
     """
     Đăng nhập bằng email HOẶC username + password.
     Trả về api_key để FE lưu và dùng như trước (header X-API-Key).

@@ -2,7 +2,7 @@
 Public endpoints — không cần auth.
 Bất kỳ ai cũng có thể browse và execute workflow public.
 """
-from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 from uuid import uuid4
@@ -32,11 +32,11 @@ def public_stats(db: Session = Depends(get_db)):
 
 @router.get("", response_model=list[WorkflowOut])
 def list_workflows(
-    category: Optional[str] = None,
-    tag: Optional[str] = None,
-    q: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 50,
+    category: Optional[str] = Query(default=None, max_length=50),
+    tag: Optional[str] = Query(default=None, max_length=50),
+    q: Optional[str] = Query(default=None, max_length=200),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     """Liệt kê tất cả workflow public đã được duyệt."""
@@ -49,9 +49,10 @@ def list_workflows(
     if tag:
         query = query.filter(db_models.PublicWorkflow.tags.contains([tag]))
     if q:
+        safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         query = query.filter(
-            db_models.PublicWorkflow.title.ilike(f"%{q}%") |
-            db_models.PublicWorkflow.description.ilike(f"%{q}%")
+            db_models.PublicWorkflow.title.ilike(f"%{safe_q}%") |
+            db_models.PublicWorkflow.description.ilike(f"%{safe_q}%")
         )
     workflows = query.order_by(db_models.PublicWorkflow.call_count.desc()).offset(skip).limit(limit).all()
     return [_to_out(w) for w in workflows]

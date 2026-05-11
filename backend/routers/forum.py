@@ -6,7 +6,7 @@ Forum router — diễn đàn cộng đồng L2S.
 """
 from uuid import uuid4
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 
@@ -83,11 +83,11 @@ def forum_stats(db: Session = Depends(get_db)):
 
 @router.get("/threads", response_model=list[ForumThreadSummary])
 def list_threads(
-    category: str | None = None,
-    q: str | None = None,
-    sort: str = "recent",     # recent / popular / unanswered
-    skip: int = 0,
-    limit: int = 50,
+    category: str | None = Query(default=None, max_length=50),
+    q: str | None = Query(default=None, max_length=200),
+    sort: str = Query(default="recent", pattern="^(recent|popular|unanswered)$"),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     query = db.query(db_models.ForumThread)
@@ -96,7 +96,8 @@ def list_threads(
             raise HTTPException(status_code=400, detail="Category không hợp lệ")
         query = query.filter(db_models.ForumThread.category == category)
     if q:
-        pattern = f"%{q.strip()}%"
+        safe_q = q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        pattern = f"%{safe_q}%"
         query = query.filter(or_(
             db_models.ForumThread.title.ilike(pattern),
             db_models.ForumThread.body_md.ilike(pattern),
